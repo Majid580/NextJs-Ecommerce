@@ -43,7 +43,6 @@ export default function DealOfTheDay() {
     <section
       className="w-full bg-[#fdf5e6] max-w-6xl mx-auto text-black rounded-lg overflow-hidden shadow-lg my-12
       flex flex-col sm:flex-row items-stretch"
-      data-aos="fade-up"
     >
       {/* Left side */}
       <div className="w-full sm:w-1/2 relative h-64 sm:h-auto">

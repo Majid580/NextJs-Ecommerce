@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function HeroSection() {
   return (
-    <section className="bg-white w-full px-3 sm:px-6 py-6" data-aos="fade-up">
+    <section className="bg-white w-full px-3 sm:px-6 py-6">
       <div className="max-w-6xl mx-auto shadow-md rounded-lg flex items-center bg-[#fdf5e6] overflow-hidden">
         {/* Left side - text */}
         <div className="flex-1 p-4 sm:p-8 md:p-10">
