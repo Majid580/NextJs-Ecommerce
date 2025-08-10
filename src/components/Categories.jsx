@@ -1,6 +1,5 @@
 "use client";
 import Image from "next/image";
-import useAOS from "../hooks/useAos";
 export default function Categories() {
   return (
     <section data-aos="fade-up" className="bg-white w-full px-3 sm:px-6 py-8">

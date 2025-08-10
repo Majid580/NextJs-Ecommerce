@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-
+import { SpeedInsights } from "@vercel/speed-insights/next";
 export default function Footer() {
   const year = new Date().getFullYear();
 
@@ -117,6 +117,7 @@ export default function Footer() {
             </Link>
           </div>
         </div>
+        <SpeedInsights />
       </div>
     </footer>
   );

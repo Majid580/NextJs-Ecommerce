@@ -2,7 +2,6 @@
 
 import { allProducts } from "@/data/allProducts";
 import ProductCard from "./ProductCard";
-import useAOS from "../hooks/useAos";
 export default function TrendingThisWeek() {
   const trendingProducts = allProducts.filter((x) => x.trending);
   return (
