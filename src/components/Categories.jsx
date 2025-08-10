@@ -1,9 +1,9 @@
 "use client";
 import Image from "next/image";
-
+import useAOS from "../hooks/useAos";
 export default function Categories() {
   return (
-    <section className="bg-white w-full px-3 sm:px-6 py-8">
+    <section data-aos="fade-up" className="bg-white w-full px-3 sm:px-6 py-8">
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Women Category */}
         <div className="relative group rounded-lg overflow-hidden shadow-md">

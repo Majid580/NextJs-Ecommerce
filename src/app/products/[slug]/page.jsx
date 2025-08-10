@@ -27,7 +27,7 @@ export default function ProductDetail({ params }) {
       : "No reviews yet.",
   };
   return (
-    <div className="max-w-6xl mx-auto text-black p-4">
+    <div className="max-w-6xl mx-auto text-black p-4" data-aos="fade-up">
       <div className="flex flex-col md:flex-row gap-6">
         {/* Left Side: Image + Thumbnails */}
         <div className="w-full md:w-1/2">

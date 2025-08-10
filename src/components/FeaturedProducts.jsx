@@ -15,11 +15,17 @@ export default function FeaturedProducts() {
 
   return (
     <section className="py-10 px-4 bg-gradient-to-b from-gray-50 to-white">
-      <h2 className="text-2xl font-bold text-center mb-8 text-gray-800">
+      <h2
+        className="text-2xl font-bold text-center mb-8 text-gray-800"
+        data-aos="fade-up"
+      >
         🌟 Featured Products
       </h2>
 
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto">
+      <div
+        className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto"
+        data-aos="fade-up"
+      >
         {productsToShow.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
