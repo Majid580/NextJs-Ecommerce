@@ -5,7 +5,7 @@ import Categories from "./Categories";
 import TrendingThisWeek from "./TrendingthisWeek";
 import DealOfTheDay from "./DealOfTheDay";
 import FeaturedProducts from "./FeaturedProducts";
-import useAOS from "../hooks/useAos";
+import useAOS from "@/hooks/useAos";
 
 export default function Home() {
   useAOS(1000);
