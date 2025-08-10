@@ -78,32 +78,43 @@ export default function CategoryProductsPage({ params }) {
 
   return (
     <FadeUp>
-      <section className="min-h-screen py-8 px-4 bg-gradient-to-b from-gray-100 to-white max-w-7xl mx-auto">
-        <h2 className="text-3xl font-extrabold text-gray-900 mb-8 capitalize text-center tracking-wide">
+      <section className="min-h-screen py-6 px-3 bg-gradient-to-b from-gray-100 to-white max-w-full">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-6 px-4 text-center capitalize tracking-wide">
           {category} Collection
         </h2>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        {/* Grid Container with 2 columns on small screens */}
+        <div className="grid grid-cols-[160px_1fr] gap-4 sm:grid-cols-[220px_1fr] max-w-7xl mx-auto min-h-[80vh]">
           {/* Filters Sidebar */}
-          <aside className="lg:w-72 bg-white rounded-xl shadow-lg p-6 sticky top-4 self-start z-10">
-            <h3 className="text-xl font-semibold mb-6 border-b pb-2 text-gray-800">
-              Filter Products
+          <aside
+            className="bg-white rounded-xl shadow-lg p-4
+                       overflow-y-auto max-h-[75vh]
+                       sticky top-4 left-0
+                       w-[150px] sm:w-[220px]
+                       text-sm sm:text-base
+                       scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+            aria-label="Product Filters"
+          >
+            <h3 className="text-lg font-semibold mb-5 border-b pb-2 text-gray-800">
+              Filters
             </h3>
 
             {/* Sizes */}
-            <div className="mb-6">
+            <div className="mb-5">
               <h4 className="font-semibold text-gray-700 mb-3">Sizes</h4>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2">
                 {sizesOptions.map((size) => (
                   <button
                     key={size}
                     onClick={() => toggleSize(size)}
-                    className={`cursor-pointer px-3 py-1.5 rounded-full border text-sm font-medium transition ${
-                      selectedSizes.includes(size)
-                        ? "bg-black text-white border-black shadow-md"
-                        : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                    }`}
+                    className={`cursor-pointer px-2 py-1 rounded-full border text-xs font-medium transition
+                      ${
+                        selectedSizes.includes(size)
+                          ? "bg-black text-white border-black shadow-md"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                      }`}
                     aria-pressed={selectedSizes.includes(size)}
+                    aria-label={`Filter size ${size}`}
                   >
                     {size}
                   </button>
@@ -112,9 +123,9 @@ export default function CategoryProductsPage({ params }) {
             </div>
 
             {/* Colors */}
-            <div className="mb-6">
+            <div className="mb-5">
               <h4 className="font-semibold text-gray-700 mb-3">Colors</h4>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2">
                 {colorsOptions.map((color) => (
                   <button
                     key={color}
@@ -122,23 +133,25 @@ export default function CategoryProductsPage({ params }) {
                     title={color}
                     aria-label={`Filter by color ${color}`}
                     style={{ backgroundColor: color }}
-                    className={`w-8 h-8 rounded-full border-2 transition-shadow focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-black ${
-                      selectedColors.includes(color)
-                        ? "border-black shadow-lg"
-                        : "border-transparent hover:border-gray-400"
-                    }`}
+                    className={`w-6 h-6 rounded-full border-2 transition-shadow focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-black
+                      ${
+                        selectedColors.includes(color)
+                          ? "border-black shadow-lg"
+                          : "border-transparent hover:border-gray-400"
+                      }`}
                   />
                 ))}
               </div>
             </div>
 
             {/* Material */}
-            <div className="mb-6">
+            <div className="mb-5">
               <h4 className="font-semibold text-gray-700 mb-3">Material</h4>
               <select
                 value={selectedMaterial}
                 onChange={(e) => setSelectedMaterial(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black"
+                className="w-full rounded-md border border-gray-300 px-2 py-1 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black text-sm"
+                aria-label="Filter by material"
               >
                 <option value="">All</option>
                 {materialsOptions.map((mat) => (
@@ -154,7 +167,7 @@ export default function CategoryProductsPage({ params }) {
               <h4 className="font-semibold text-gray-700 mb-3">
                 Price Range (₨)
               </h4>
-              <div className="flex gap-4">
+              <div className="flex gap-2">
                 <input
                   type="number"
                   min={0}
@@ -166,7 +179,7 @@ export default function CategoryProductsPage({ params }) {
                       priceRange[1],
                     ])
                   }
-                  className="w-1/2 rounded-md border border-gray-300 px-3 py-2 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black text-sm"
                   placeholder="Min"
                   aria-label="Minimum price"
                 />
@@ -181,7 +194,7 @@ export default function CategoryProductsPage({ params }) {
                       Math.max(+e.target.value || 0, priceRange[0]),
                     ])
                   }
-                  className="w-1/2 rounded-md border border-gray-300 px-3 py-2 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black"
+                  className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black text-sm"
                   placeholder="Max"
                   aria-label="Maximum price"
                 />
@@ -190,15 +203,23 @@ export default function CategoryProductsPage({ params }) {
           </aside>
 
           {/* Products Grid */}
-          <main className="flex-1 grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <main className="overflow-auto">
             {filteredProducts.length === 0 ? (
-              <p className="text-center text-gray-500 col-span-full text-lg mt-20">
+              <p className="text-center text-gray-500 text-base mt-16">
                 No products found with the selected filters.
               </p>
             ) : (
-              filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))
+              <div
+                className="grid gap-4
+                           grid-cols-1
+                           sm:grid-cols-2
+                           md:grid-cols-3
+                           lg:grid-cols-4"
+              >
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
             )}
           </main>
         </div>
@@ -214,12 +235,12 @@ function ProductCard({ product }) {
 
   return (
     <article
-      className="group relative text-black bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-2xl transition duration-300 flex flex-col"
+      className="group relative bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition duration-300 flex flex-col"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
       {/* Image + Icons */}
-      <div className="relative h-72 w-full bg-white flex items-center justify-center overflow-hidden rounded-t-3xl">
+      <div className="relative w-full h-52 sm:h-60 md:h-64 bg-white flex items-center justify-center overflow-hidden rounded-t-2xl">
         <Link
           href={`/products/${product.slug}`}
           className="w-full h-full block relative"
@@ -232,43 +253,43 @@ function ProductCard({ product }) {
             }
             alt={product.title}
             fill
-            className="object-contain p-5 transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, 33vw"
+            className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
             priority
           />
         </Link>
 
         <button
           aria-label="Add to favorites"
-          className="absolute top-4 right-4 bg-white/90 p-3 rounded-full shadow hover:bg-red-600 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600"
+          className="absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow hover:bg-red-600 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600"
         >
-          <FaHeart className="text-lg" />
+          <FaHeart className="text-base sm:text-lg" />
         </button>
 
-        <div className="absolute top-4 left-4 bg-yellow-400 text-white text-xs font-bold px-3 py-1 rounded-full shadow flex items-center space-x-1 select-none">
+        <div className="absolute top-3 left-3 bg-yellow-400 text-white text-xs sm:text-sm font-bold px-2 py-0.5 rounded-full shadow flex items-center space-x-1 select-none">
           <FaStar className="inline" /> <span>{product.rating.toFixed(1)}</span>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-5 flex flex-col flex-grow">
+      <div className="p-3 sm:p-5 flex flex-col flex-grow">
         <h3
           title={product.title}
-          className="font-semibold text-gray-900 text-lg truncate mb-1"
+          className="font-semibold text-gray-900 text-base sm:text-lg truncate mb-1"
         >
           {product.title}
         </h3>
-        <p className="text-xl font-extrabold text-gray-900 mb-4">
+        <p className="text-lg sm:text-xl font-extrabold text-gray-900 mb-3">
           ₨ {product.price.toLocaleString()}
         </p>
 
         {/* Sizes */}
-        <div className="flex gap-3 flex-wrap mb-4">
+        <div className="flex gap-2 flex-wrap mb-3 sm:mb-4">
           {product.sizes?.map((size) => (
             <button
               key={size}
               onClick={() => setSelectedSize(size)}
-              className={`cursor-pointer px-4 py-1.5 rounded-full border text-sm font-medium transition ${
+              className={`cursor-pointer px-3 py-1 rounded-full border text-xs sm:text-sm font-medium transition ${
                 selectedSize === size
                   ? "bg-black text-white border-black shadow-md"
                   : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
@@ -285,15 +306,15 @@ function ProductCard({ product }) {
           <div className="flex items-center border rounded-full overflow-hidden shadow-sm">
             <button
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="px-4 py-1 hover:bg-gray-200 transition"
+              className="px-3 py-1 hover:bg-gray-200 transition"
               aria-label="Decrease quantity"
             >
               –
             </button>
-            <span className="px-5 py-1 font-medium">{quantity}</span>
+            <span className="px-4 py-1 font-medium">{quantity}</span>
             <button
               onClick={() => setQuantity((q) => q + 1)}
-              className="px-4 py-1 hover:bg-gray-200 transition"
+              className="px-3 py-1 hover:bg-gray-200 transition"
               aria-label="Increase quantity"
             >
               +
@@ -301,10 +322,10 @@ function ProductCard({ product }) {
           </div>
 
           <button
-            className="flex items-center gap-2 bg-black text-white px-5 py-2 rounded-full hover:bg-gray-900 transition shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-900 transition shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
             aria-label={`Add ${quantity} ${product.title} to cart`}
           >
-            <FaShoppingCart /> Add
+            <FaShoppingCart className="text-sm sm:text-base" /> Add
           </button>
         </div>
       </div>
