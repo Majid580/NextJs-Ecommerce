@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Image from "next/image";
 import { FaHeart, FaShoppingCart, FaStar } from "react-icons/fa";
-import { featuredProducts } from "@/data/featuredProducts";
+import { allProducts } from "@/data/allProducts";
+import Link from "next/link";
 
 export default function FeaturedProducts() {
+  const featuredProducts = allProducts.filter((x) => x.featured);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
   const productsToShow = isMobile
     ? featuredProducts.slice(0, Math.ceil(featuredProducts.length / 2))
@@ -38,14 +40,16 @@ function ProductCard({ product }) {
       onMouseLeave={() => setHovered(false)}
     >
       {/* Product Image */}
-      <div className="relative h-72 w-full bg-white flex items-center justify-center">
-        <Image
-          src={hovered ? product.images[1] : product.images[0]}
-          alt={product.title}
-          fill
-          className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
-        />
 
+      <div className="relative h-72 w-full bg-white flex items-center justify-center">
+        <Link href={`/products/${product.slug}`}>
+          <Image
+            src={hovered ? product.images[1] : product.images[0]}
+            alt={product.title}
+            fill
+            className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+          />
+        </Link>
         {/* Favorite Icon */}
         <button className="absolute top-3 right-3 bg-white/80 p-2 rounded-full shadow hover:bg-red-500 hover:text-white transition">
           <FaHeart />

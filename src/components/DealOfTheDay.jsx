@@ -61,7 +61,7 @@ export default function DealOfTheDay() {
       {/* Right side */}
       <div className="w-full sm:w-1/2 relative bg-white p-8 flex flex-col justify-center items-center space-y-8 overflow-hidden rounded-r-lg">
         {/* Smaller background image, size relative to container height */}
-        <div className="absolute top-4 right-[-2rem] opacity-40 z-0 h-48 w-48 sm:h-64 sm:w-64 ">
+        <div className="absolute top-4 right-[-2rem] opacity-70 z-0 h-48 w-48 sm:h-64 sm:w-64 ">
           <Image
             src="/images/HurryUp.png"
             alt="Background"

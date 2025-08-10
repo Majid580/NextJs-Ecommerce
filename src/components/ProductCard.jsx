@@ -5,6 +5,7 @@ import Image from "next/image";
 import { FaHeart, FaStar, FaShoppingCart } from "react-icons/fa";
 import { IoIosHeartEmpty } from "react-icons/io";
 import { CiStar } from "react-icons/ci";
+import Link from "next/link";
 export default function ProductCard({ product }) {
   const [hovered, setHovered] = useState(false);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
@@ -22,15 +23,16 @@ export default function ProductCard({ product }) {
         onMouseLeave={toggleHover}
       >
         {/* Images sliding effect */}
-        <Image
-          src={hovered ? product.images[1] : product.images[0]}
-          alt={product.title}
-          width={300}
-          height={350}
-          className="w-full h-[350px] object-cover rounded-md transition-transform duration-500"
-          priority
-        />
-
+        <Link href={`/products/${product.slug}`}>
+          <Image
+            src={hovered ? product.images[1] : product.images[0]}
+            alt={product.title}
+            width={300}
+            height={350}
+            className="w-full h-[350px] object-cover rounded-md transition-transform duration-500"
+            priority
+          />
+        </Link>
         {/* Heart & Review icons */}
         <div className="absolute top-2 right-2 flex space-x-2 bg-white bg-opacity-90 rounded-md p-1 shadow">
           <button

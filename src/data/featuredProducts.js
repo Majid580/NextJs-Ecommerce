@@ -3,6 +3,7 @@ export const featuredProducts = [
   {
     id: 1,
     title: "Premium Cotton Shirt",
+    slug: "Premium-Cotton-Shirt",
     price: 2499,
     rating: 4.5,
     images: ["/images/kids.png", "/images/kids.png"],
@@ -11,6 +12,7 @@ export const featuredProducts = [
   {
     id: 2,
     title: "Casual Denim Jacket",
+    slug: "Casual-Denim-Jacket",
     price: 4999,
     rating: 4.8,
     images: ["/images/kids.png", "/images/kids.png"],
@@ -19,6 +21,7 @@ export const featuredProducts = [
   {
     id: 3,
     title: "Elegant Summer Dress",
+    slug: "Elegant-Summer-Dress",
     price: 3499,
     rating: 4.7,
     images: ["/images/kids.png", "/images/kids.png"],
