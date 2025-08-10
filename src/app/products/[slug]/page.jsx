@@ -2,137 +2,179 @@
 import { allProducts } from "@/data/allProducts";
 import Image from "next/image";
 import { useState } from "react";
-import { FaFacebook, FaInstagram, FaShoppingCart } from "react-icons/fa";
+import { FaShoppingCart, FaFacebookF, FaInstagram } from "react-icons/fa";
 
 export default function ProductDetail({ params }) {
-  const [selectedImage, setSelectedImage] = useState(0);
+  const [hovered, setHovered] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedColor, setSelectedColor] = useState(null);
   const [activeTab, setActiveTab] = useState("description");
-
   const product = allProducts.find((p) => p.slug === params.slug);
+
   if (!product) {
     return (
       <div className="p-6 text-center text-red-500">Product not found</div>
     );
   }
 
-  const isInStock = product.stock > 1;
-
+  const colors = ["#000000", "#FF0000", "#0000FF"]; // Example colors
+  const tabs = {
+    description: product.description || "No description available.",
+    details: product.details || "No product details available.",
+    reviews: product.reviews?.length
+      ? product.reviews.join("\n")
+      : "No reviews yet.",
+  };
   return (
     <div className="max-w-6xl mx-auto text-black p-4">
-      {/* Flex for desktop, stacked for mobile */}
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Left side - Image + Thumbnails */}
-        <div className="w-full md:w-1/2 flex flex-col items-center">
-          <div className="w-full rounded-lg overflow-hidden shadow-lg bg-white p-2">
+        {/* Left Side: Image + Thumbnails */}
+        <div className="w-full md:w-1/2">
+          {/* Main Image */}
+          <div className=" rounded-lg overflow-hidden relative">
             <Image
               src={product.images[selectedImage]}
               alt={product.title}
-              width={600}
-              height={600}
-              className="w-full h-auto object-contain"
+              width={500}
+              height={500}
+              className="w-full h-auto object-contain bg-white p-2"
             />
           </div>
+
           {/* Thumbnails */}
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-2 mt-3 justify-center md:justify-start">
             {product.images.map((img, idx) => (
-              <div
+              <Image
                 key={idx}
-                className={`w-16 h-16 rounded-lg overflow-hidden border-2 cursor-pointer transition 
-                  ${
-                    selectedImage === idx ? "border-black" : "border-gray-200"
-                  }`}
+                src={img}
+                alt={`Thumbnail ${idx}`}
+                width={70}
+                height={70}
+                className={`cursor-pointer rounded-md border-2 transition ${
+                  selectedImage === idx
+                    ? "border-black"
+                    : "border-transparent hover:border-gray-400"
+                }`}
                 onClick={() => setSelectedImage(idx)}
-              >
-                <Image
-                  src={img}
-                  alt={`${product.title} thumbnail ${idx + 1}`}
-                  width={64}
-                  height={64}
-                  className="object-cover w-full h-full hover:opacity-80"
-                />
-              </div>
+              />
             ))}
           </div>
         </div>
 
-        {/* Right side - Product Info */}
-        <div className="w-full md:w-1/2 space-y-4">
-          {/* Stock badge */}
+        {/* Right Side: Product Info */}
+        <div className="w-full md:w-1/2 flex flex-col gap-4">
+          {/* Stock Badge */}
           <div className="flex items-center gap-3">
             <span
-              className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                isInStock ? "bg-green-500 text-white" : "bg-red-500 text-white"
+              className={`px-3 py-1 rounded-full text-sm font-semibold text-white ${
+                product.stock > 1 ? "bg-green-500" : "bg-red-500"
               }`}
             >
-              {isInStock ? "In Stock" : "Out of Stock"}
+              {product.stock > 1 ? "In Stock" : "Out of Stock"}
             </span>
-            <span className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded-full">
-              {product.stock} Available
+            <span className="text-gray-500 text-sm">
+              Total Stock: {product.stock}
             </span>
           </div>
 
           {/* Title */}
-          <h1 className="text-3xl font-bold">{product.title}</h1>
+          <h1 className="text-2xl font-bold">{product.title}</h1>
 
-          {/* Socials */}
-          <div className="flex gap-4 text-gray-600">
-            <FaFacebook className="text-2xl hover:text-blue-600 cursor-pointer" />
-            <FaInstagram className="text-2xl hover:text-pink-500 cursor-pointer" />
+          {/* Social Icons */}
+          <div className="flex gap-3">
+            <a
+              href="#"
+              className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
+            >
+              <FaFacebookF />
+            </a>
+            <a
+              href="#"
+              className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
+            >
+              <FaInstagram />
+            </a>
           </div>
 
           {/* Price */}
-          <p className="text-2xl font-bold text-black">Rs. {product.price}</p>
+          <p className="text-xl font-bold">Rs. {product.price}</p>
 
-          {/* Quantity controls */}
-          <div className="flex items-center gap-4">
+          {/* Quantity Selector */}
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
             >
               -
             </button>
-            <span className="text-lg font-semibold">{quantity}</span>
+            <span>{quantity}</span>
             <button
-              onClick={() => setQuantity(quantity + 1)}
-              className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
+              onClick={() => setQuantity((q) => q + 1)}
+              className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
             >
               +
             </button>
           </div>
 
-          {/* Add to cart button */}
-          <button className="flex items-center justify-center gap-2 w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition">
-            <FaShoppingCart />
-            Add to Cart
+          {/* Color Selection */}
+          <div>
+            <p className="mb-2 font-semibold">Select Color:</p>
+            <div className="flex gap-2">
+              {colors.map((color, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedColor(color)}
+                  style={{ backgroundColor: color }}
+                  className={`w-8 h-8 rounded-full border-2 ${
+                    selectedColor === color ? "border-black" : "border"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Add to Cart */}
+          <button className="flex items-center justify-center gap-2 bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition">
+            <FaShoppingCart /> Add to Cart
           </button>
 
           {/* Tabs */}
           <div className="flex flex-col md:flex-row gap-4 mt-6">
-            {/* Tab buttons */}
-            <div className="flex md:flex-col gap-2">
-              {["description", "details", "reviews"].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 rounded-lg font-semibold capitalize transition ${
-                    activeTab === tab
-                      ? "bg-black text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+            <div className="flex flex-col gap-2 md:w-1/3">
+              <button
+                onClick={() => setActiveTab("description")}
+                className={`py-2 rounded ${
+                  activeTab === "description"
+                    ? "bg-black text-white"
+                    : "bg-gray-200 hover:bg-gray-300"
+                }`}
+              >
+                Description
+              </button>
+              <button
+                onClick={() => setActiveTab("details")}
+                className={`py-2 rounded ${
+                  activeTab === "details"
+                    ? "bg-black text-white"
+                    : "bg-gray-200 hover:bg-gray-300"
+                }`}
+              >
+                Product Details
+              </button>
+              <button
+                onClick={() => setActiveTab("reviews")}
+                className={`py-2 rounded ${
+                  activeTab === "reviews"
+                    ? "bg-black text-white"
+                    : "bg-gray-200 hover:bg-gray-300"
+                }`}
+              >
+                Reviews
+              </button>
             </div>
-
-            {/* Tab content */}
-            <div className="flex-1 bg-white p-4 rounded-lg shadow-md text-sm text-gray-700">
-              {activeTab === "description" && (
-                <p>{product.description || "No description available."}</p>
-              )}
-              {activeTab === "details" && <p>Product details go here...</p>}
-              {activeTab === "reviews" && <p>No reviews yet.</p>}
+            <div className="md:w-2/3 bg-gray-50 p-4 rounded shadow whitespace-pre-line">
+              <p>{tabs[activeTab]}</p>
             </div>
           </div>
         </div>
