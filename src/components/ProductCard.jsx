@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { FaHeart, FaStar, FaShoppingCart } from "react-icons/fa";
+import { FaShoppingCart } from "react-icons/fa";
 import { IoIosHeartEmpty } from "react-icons/io";
 import { CiStar } from "react-icons/ci";
 import Link from "next/link";
@@ -37,7 +37,8 @@ export default function ProductCard({ product }) {
         <div className="absolute top-2 right-2 flex space-x-2 bg-white bg-opacity-90 rounded-md p-1 shadow">
           <button
             aria-label="Add to favorites"
-            className="text-red-600 hover:text-red-800"
+            className="text-red-600 hover:text-red-80
+            0"
           >
             <IoIosHeartEmpty size={20} />
           </button>
