@@ -83,31 +83,31 @@ export default function CategoryProductsPage({ params }) {
           {category} Collection
         </h2>
 
-        {/* Grid Container with 2 columns on small screens */}
-        <div className="grid grid-cols-[160px_1fr] gap-4 sm:grid-cols-[220px_1fr] max-w-7xl mx-auto min-h-[80vh]">
+        {/* Grid Container with minimal filter width */}
+        <div className="grid grid-cols-[100px_1fr] sm:grid-cols-[150px_1fr] gap-4 max-w-7xl mx-auto min-h-[80vh]">
           {/* Filters Sidebar */}
           <aside
-            className="bg-white rounded-xl shadow-lg p-4
+            className="bg-white rounded-xl shadow-lg p-3
                        overflow-y-auto max-h-[75vh]
                        sticky top-4 left-0
-                       w-[150px] sm:w-[220px]
-                       text-sm sm:text-base
+                       w-[100px] sm:w-[150px]
+                       text-xs sm:text-sm
                        scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
             aria-label="Product Filters"
           >
-            <h3 className="text-lg font-semibold mb-5 border-b pb-2 text-gray-800">
+            <h3 className="text-base font-semibold mb-4 border-b pb-1 text-gray-800">
               Filters
             </h3>
 
             {/* Sizes */}
             <div className="mb-5">
-              <h4 className="font-semibold text-gray-700 mb-3">Sizes</h4>
-              <div className="flex flex-wrap gap-2">
+              <h4 className="font-semibold text-gray-700 mb-2">Sizes</h4>
+              <div className="flex flex-wrap gap-1 justify-center">
                 {sizesOptions.map((size) => (
                   <button
                     key={size}
                     onClick={() => toggleSize(size)}
-                    className={`cursor-pointer px-2 py-1 rounded-full border text-xs font-medium transition
+                    className={`cursor-pointer px-1.5 py-0.5 rounded-full border text-xs font-medium transition
                       ${
                         selectedSizes.includes(size)
                           ? "bg-black text-white border-black shadow-md"
@@ -124,8 +124,8 @@ export default function CategoryProductsPage({ params }) {
 
             {/* Colors */}
             <div className="mb-5">
-              <h4 className="font-semibold text-gray-700 mb-3">Colors</h4>
-              <div className="flex flex-wrap gap-2">
+              <h4 className="font-semibold text-gray-700 mb-2">Colors</h4>
+              <div className="flex flex-wrap gap-1 justify-center">
                 {colorsOptions.map((color) => (
                   <button
                     key={color}
@@ -133,7 +133,7 @@ export default function CategoryProductsPage({ params }) {
                     title={color}
                     aria-label={`Filter by color ${color}`}
                     style={{ backgroundColor: color }}
-                    className={`w-6 h-6 rounded-full border-2 transition-shadow focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-black
+                    className={`w-5 h-5 rounded-full border-2 transition-shadow focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-black
                       ${
                         selectedColors.includes(color)
                           ? "border-black shadow-lg"
@@ -146,11 +146,11 @@ export default function CategoryProductsPage({ params }) {
 
             {/* Material */}
             <div className="mb-5">
-              <h4 className="font-semibold text-gray-700 mb-3">Material</h4>
+              <h4 className="font-semibold text-gray-700 mb-2">Material</h4>
               <select
                 value={selectedMaterial}
                 onChange={(e) => setSelectedMaterial(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-2 py-1 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black text-sm"
+                className="w-full rounded-md border border-gray-300 px-2 py-1 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black text-xs sm:text-sm"
                 aria-label="Filter by material"
               >
                 <option value="">All</option>
@@ -164,10 +164,8 @@ export default function CategoryProductsPage({ params }) {
 
             {/* Price Range */}
             <div>
-              <h4 className="font-semibold text-gray-700 mb-3">
-                Price Range (₨)
-              </h4>
-              <div className="flex gap-2">
+              <h4 className="font-semibold text-gray-700 mb-2">Price (₨)</h4>
+              <div className="flex gap-1">
                 <input
                   type="number"
                   min={0}
@@ -179,7 +177,7 @@ export default function CategoryProductsPage({ params }) {
                       priceRange[1],
                     ])
                   }
-                  className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black text-sm"
+                  className="w-1/2 rounded-md border border-gray-300 px-1 py-1 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black text-xs"
                   placeholder="Min"
                   aria-label="Minimum price"
                 />
@@ -194,7 +192,7 @@ export default function CategoryProductsPage({ params }) {
                       Math.max(+e.target.value || 0, priceRange[0]),
                     ])
                   }
-                  className="w-1/2 rounded-md border border-gray-300 px-2 py-1 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black text-sm"
+                  className="w-1/2 rounded-md border border-gray-300 px-1 py-1 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black text-xs"
                   placeholder="Max"
                   aria-label="Maximum price"
                 />
@@ -210,7 +208,7 @@ export default function CategoryProductsPage({ params }) {
               </p>
             ) : (
               <div
-                className="grid gap-4
+                className="grid gap-5
                            grid-cols-1
                            sm:grid-cols-2
                            md:grid-cols-3
@@ -240,7 +238,7 @@ function ProductCard({ product }) {
       onMouseLeave={() => setHovered(false)}
     >
       {/* Image + Icons */}
-      <div className="relative w-full h-52 sm:h-60 md:h-64 bg-white flex items-center justify-center overflow-hidden rounded-t-2xl">
+      <div className="relative w-full h-64 sm:h-72 md:h-72 bg-white flex items-center justify-center overflow-hidden rounded-t-2xl">
         <Link
           href={`/products/${product.slug}`}
           className="w-full h-full block relative"
@@ -272,19 +270,19 @@ function ProductCard({ product }) {
       </div>
 
       {/* Content */}
-      <div className="p-3 sm:p-5 flex flex-col flex-grow">
+      <div className="p-4 sm:p-5 flex flex-col flex-grow">
         <h3
           title={product.title}
           className="font-semibold text-gray-900 text-base sm:text-lg truncate mb-1"
         >
           {product.title}
         </h3>
-        <p className="text-lg sm:text-xl font-extrabold text-gray-900 mb-3">
+        <p className="text-lg sm:text-xl font-extrabold text-gray-900 mb-4">
           ₨ {product.price.toLocaleString()}
         </p>
 
         {/* Sizes */}
-        <div className="flex gap-2 flex-wrap mb-3 sm:mb-4">
+        <div className="flex gap-2 flex-wrap mb-4 sm:mb-5">
           {product.sizes?.map((size) => (
             <button
               key={size}
