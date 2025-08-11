@@ -1,187 +1,270 @@
 "use client";
-import FadeUp from "@/components/FadeUp";
-import { allProducts } from "@/data/allProducts";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useState } from "react";
 import { FaShoppingCart, FaFacebookF, FaInstagram } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
+import { allProducts } from "@/data/allProducts";
 
 export default function ProductDetail({ params }) {
-  const [hovered, setHovered] = useState(false);
+  const product = allProducts.find((p) => p.slug === params.slug);
+
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState(null);
   const [activeTab, setActiveTab] = useState("description");
-  const product = allProducts.find((p) => p.slug === params.slug);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  useEffect(() => {
+    setSelectedColor(null);
+    setSelectedImage(0);
+    setQuantity(1);
+    setActiveTab("description");
+    setAddingToCart(false);
+  }, [product]);
 
   if (!product) {
     return (
-      <div className="p-6 text-center text-red-500">Product not found</div>
+      <div className="min-h-screen flex items-center justify-center p-6 text-red-600 font-medium bg-gray-50">
+        Product not found
+      </div>
     );
   }
 
-  const colors = ["#000000", "#FF0000", "#0000FF"]; // Example colors
+  const colors = product.colors?.length
+    ? product.colors
+    : ["#000000", "#FF0000", "#0000FF"];
   const tabs = {
     description: product.description || "No description available.",
     details: product.details || "No product details available.",
     reviews: product.reviews?.length
-      ? product.reviews.join("\n")
+      ? product.reviews.join("\n\n")
       : "No reviews yet.",
   };
+
+  const canAddToCart =
+    product.stock > 0 && (colors.length === 0 || selectedColor !== null);
+
+  function handleAddToCart() {
+    if (!canAddToCart) {
+      setShowTooltip(true);
+      setTimeout(() => setShowTooltip(false), 2500);
+      return;
+    }
+    setAddingToCart(true);
+    setTimeout(() => setAddingToCart(false), 2500);
+  }
+
   return (
-    <FadeUp>
-      <div className="max-w-6xl mx-auto text-black p-4" data-aos="fade-up">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* Left Side: Image + Thumbnails */}
-          <div className="w-full md:w-1/2">
-            {/* Main Image */}
-            <div className=" rounded-lg overflow-hidden relative">
-              <Image
-                src={product.images[selectedImage]}
-                alt={product.title}
-                width={500}
-                height={500}
-                className="w-full h-auto object-contain bg-white p-2"
-              />
-            </div>
-
-            {/* Thumbnails */}
-            <div className="flex gap-2 mt-3 justify-center md:justify-start">
-              {product.images.map((img, idx) => (
-                <Image
-                  key={idx}
-                  src={img}
-                  alt={`Thumbnail ${idx}`}
-                  width={70}
-                  height={70}
-                  className={`cursor-pointer rounded-md border-2 transition ${
-                    selectedImage === idx
-                      ? "border-black"
-                      : "border-transparent hover:border-gray-400"
-                  }`}
-                  onClick={() => setSelectedImage(idx)}
-                />
-              ))}
-            </div>
+    <main className="max-w-5xl mx-auto p-4 sm:p-8 font-sans min-h-screen text-gray-900">
+      <div className="flex flex-col md:flex-row gap-10">
+        {/* Left: Images */}
+        <section className="md:w-1/2">
+          <div className="rounded-lg border border-gray-200 overflow-hidden bg-white shadow-sm">
+            <Image
+              src={product.images[selectedImage]}
+              alt={`${product.title} image`}
+              width={500}
+              height={500}
+              className="object-contain w-full h-auto bg-white p-4"
+            />
           </div>
-
-          {/* Right Side: Product Info */}
-          <div className="w-full md:w-1/2 flex flex-col gap-4">
-            {/* Stock Badge */}
-            <div className="flex items-center gap-3">
-              <span
-                className={`px-3 py-1 rounded-full text-sm font-semibold text-white ${
-                  product.stock > 1 ? "bg-green-500" : "bg-red-500"
+          <div className="flex flex-wrap gap-3 mt-4 justify-start">
+            {product.images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => setSelectedImage(i)}
+                aria-label={`Select image ${i + 1}`}
+                className={`w-20 h-20 rounded-md  focus:outline-none transition ${
+                  selectedImage === i
+                    ? "scale-130"
+                    : "scale-100   border-transparent hover:shadow-orange-400"
                 }`}
+              >
+                <Image
+                  src={img}
+                  alt={`Thumbnail ${i + 1}`}
+                  width={80}
+                  height={80}
+                  className="object-contain rounded-md"
+                  unoptimized
+                  loading="lazy"
+                />
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Right: Info */}
+        <section className="md:w-1/2 flex flex-col justify-between">
+          <article>
+            {/* Stock Badge and Info */}
+            <div className="flex items-center gap-4 mb-3">
+              <span
+                className={`inline-block rounded-full px-3 py-1 text-sm font-semibold text-white ${
+                  product.stock > 1 ? "bg-green-600" : "bg-red-600"
+                }`}
+                aria-live="polite"
               >
                 {product.stock > 1 ? "In Stock" : "Out of Stock"}
               </span>
-              <span className="text-gray-500 text-sm">
-                Total Stock: {product.stock}
+              <span className="text-gray-600 text-sm select-text">
+                Stock left: {product.stock}
               </span>
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl font-bold">{product.title}</h1>
+            <h1 className="text-3xl font-semibold mb-5">{product.title}</h1>
 
             {/* Social Icons */}
-            <div className="flex gap-3">
+            <div className="flex space-x-4 text-gray-600 mb-8">
               <a
                 href="#"
-                className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
+                aria-label="Share on Facebook"
+                className="hover:text-gray-900 transition"
               >
-                <FaFacebookF />
+                <FaFacebookF size={20} />
               </a>
               <a
                 href="#"
-                className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
+                aria-label="Share on Instagram"
+                className="hover:text-gray-900 transition"
               >
-                <FaInstagram />
+                <FaInstagram size={20} />
               </a>
             </div>
 
             {/* Price */}
-            <p className="text-xl font-bold">Rs. {product.price}</p>
+            <p className="text-2xl font-bold mb-6">
+              Rs. {product.price.toLocaleString()}
+            </p>
 
             {/* Quantity Selector */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4 mb-6 max-w-xs">
               <button
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                disabled={quantity <= 1}
+                aria-label="Decrease quantity"
+                className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 -
               </button>
-              <span>{quantity}</span>
+              <span
+                className="text-lg font-medium select-text"
+                aria-live="polite"
+              >
+                {quantity}
+              </span>
               <button
-                onClick={() => setQuantity((q) => q + 1)}
-                className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                onClick={() =>
+                  setQuantity((q) => Math.min(product.stock, q + 1))
+                }
+                disabled={quantity >= product.stock}
+                aria-label="Increase quantity"
+                className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 +
               </button>
             </div>
 
-            {/* Color Selection */}
-            <div>
+            {/* Color Selector */}
+            <div className="mb-8">
               <p className="mb-2 font-semibold">Select Color:</p>
-              <div className="flex gap-2">
-                {colors.map((color, idx) => (
+              <div className="flex space-x-4">
+                {colors.map((color, i) => (
                   <button
-                    key={idx}
+                    key={i}
                     onClick={() => setSelectedColor(color)}
+                    aria-label={`Select color ${color}`}
                     style={{ backgroundColor: color }}
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      selectedColor === color ? "border-black" : "border"
+                    className={`w-8 h-8 rounded-full border-2 transition focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-800 ${
+                      selectedColor === color
+                        ? "border-gray-800"
+                        : "border-transparent hover:border-gray-400"
                     }`}
                   />
                 ))}
               </div>
             </div>
 
-            {/* Add to Cart */}
-            <button className="flex items-center justify-center gap-2 bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition">
-              <FaShoppingCart /> Add to Cart
-            </button>
+            {/* Add To Cart */}
+            <div className="relative max-w-xs">
+              <button
+                onClick={handleAddToCart}
+                disabled={!canAddToCart || addingToCart}
+                aria-disabled={!canAddToCart || addingToCart}
+                className="flex items-center justify-center gap-3 bg-gray-900 text-white px-6 py-3 rounded-md font-semibold w-full hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                <FaShoppingCart />
+                {addingToCart ? "Adding..." : "Add to Cart"}
+              </button>
 
-            {/* Tabs */}
-            <div className="flex flex-col md:flex-row gap-4 mt-6">
-              <div className="flex flex-col gap-2 md:w-1/3">
-                <button
-                  onClick={() => setActiveTab("description")}
-                  className={`py-2 rounded ${
-                    activeTab === "description"
-                      ? "bg-black text-white"
-                      : "bg-gray-200 hover:bg-gray-300"
-                  }`}
-                >
-                  Description
-                </button>
-                <button
-                  onClick={() => setActiveTab("details")}
-                  className={`py-2 rounded ${
-                    activeTab === "details"
-                      ? "bg-black text-white"
-                      : "bg-gray-200 hover:bg-gray-300"
-                  }`}
-                >
-                  Product Details
-                </button>
-                <button
-                  onClick={() => setActiveTab("reviews")}
-                  className={`py-2 rounded ${
-                    activeTab === "reviews"
-                      ? "bg-black text-white"
-                      : "bg-gray-200 hover:bg-gray-300"
-                  }`}
-                >
-                  Reviews
-                </button>
-              </div>
-              <div className="md:w-2/3 bg-gray-50 p-4 rounded shadow whitespace-pre-line">
-                <p>{tabs[activeTab]}</p>
-              </div>
+              <AnimatePresence>
+                {showTooltip && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                    className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-sm rounded px-3 py-1 shadow-md select-none"
+                    role="alert"
+                  >
+                    Please select a color and ensure stock is available.
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
-        </div>
+          </article>
+
+          {/* Tabs */}
+          <Tabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+        </section>
       </div>
-    </FadeUp>
+    </main>
+  );
+}
+
+function Tabs({ tabs, activeTab, setActiveTab }) {
+  const tabKeys = Object.keys(tabs);
+
+  return (
+    <section className="mt-10">
+      <nav
+        className="flex border-b border-gray-300"
+        role="tablist"
+        aria-label="Product information tabs"
+      >
+        {tabKeys.map((key) => {
+          const isActive = activeTab === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              aria-selected={isActive}
+              role="tab"
+              tabIndex={isActive ? 0 : -1}
+              className={`flex-1 py-3 text-center font-semibold cursor-pointer transition-colors ${
+                isActive
+                  ? "border-b-2 border-gray-900 text-gray-900"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+              type="button"
+            >
+              {key.charAt(0).toUpperCase() + key.slice(1)}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* No fade animation on tab content change */}
+      <div
+        role="tabpanel"
+        aria-live="polite"
+        className="bg-gray-50 p-6 rounded-md mt-6 text-gray-700 whitespace-pre-wrap min-h-[120px]"
+      >
+        {tabs[activeTab]}
+      </div>
+    </section>
   );
 }

@@ -1,58 +1,83 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaHeart, FaShoppingCart, FaStar } from "react-icons/fa";
-import FadeUp from "@/components/FadeUp";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FaHeart,
+  FaShoppingCart,
+  FaStar,
+  FaFilter,
+  FaTimes,
+  FaChevronDown,
+} from "react-icons/fa";
 import { allProducts } from "@/data/allProducts";
 
-export default function CategoryProductsPage({ params }) {
-  const category = params.category.toLowerCase();
+/**
+ * CategoryProductsPage
+ *
+ * - Mobile: filter drawer slides from left (80% width)
+ * - Desktop: left sticky sidebar visible
+ * - Click outside or Esc closes drawer
+ * - Framer Motion animations for drawer + cards + micro interactions
+ *
+ * NOTE: Tailwind classes are used for styling. Adjust spacing/colours to taste.
+ */
 
-  // Initial products filtered by "for" field (like "women", "kids")
-  const initialProducts = allProducts.filter(
-    (p) => p.for.toLowerCase() === category
+export default function CategoryProductsPage({ params }) {
+  // category from params (Next.js dynamic route)
+  const category = (params?.category || "all").toString().toLowerCase();
+
+  // initial product list for category
+  const initialProducts = useMemo(
+    () => allProducts.filter((p) => p.for.toLowerCase() === category),
+    [category]
   );
 
-  // Filter state
+  // --- Filter states
   const [selectedSizes, setSelectedSizes] = useState([]);
   const [selectedColors, setSelectedColors] = useState([]);
-  const [priceRange, setPriceRange] = useState([0, 10000]);
   const [selectedMaterial, setSelectedMaterial] = useState("");
+  const [priceRange, setPriceRange] = useState([0, 10000]);
 
-  // Extract filter options dynamically
+  // drawer open state (mobile)
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // for focusing when drawer opens
+  const firstFilterFocusRef = useRef(null);
+
+  // --- dynamic filter options
   const sizesOptions = useMemo(() => {
-    const sizes = new Set();
-    initialProducts.forEach((p) => p.sizes.forEach((s) => sizes.add(s)));
-    return Array.from(sizes).sort();
+    const s = new Set();
+    initialProducts.forEach((p) => p.sizes?.forEach((v) => s.add(v)));
+    return Array.from(s).sort();
   }, [initialProducts]);
 
   const colorsOptions = useMemo(() => {
-    const colors = new Set();
-    initialProducts.forEach((p) => p.colors.forEach((c) => colors.add(c)));
-    return Array.from(colors);
+    const s = new Set();
+    initialProducts.forEach((p) => p.colors?.forEach((v) => s.add(v)));
+    return Array.from(s);
   }, [initialProducts]);
 
   const materialsOptions = useMemo(() => {
-    const mats = new Set();
-    initialProducts.forEach((p) => mats.add(p.material));
-    return Array.from(mats);
+    const s = new Set();
+    initialProducts.forEach((p) => p.material && s.add(p.material));
+    return Array.from(s);
   }, [initialProducts]);
 
-  // Filter products based on selected filters
+  // --- Filtered products
   const filteredProducts = useMemo(() => {
     return initialProducts.filter((p) => {
       const sizeMatch =
         selectedSizes.length === 0 ||
-        p.sizes.some((s) => selectedSizes.includes(s));
+        p.sizes?.some((s) => selectedSizes.includes(s));
       const colorMatch =
         selectedColors.length === 0 ||
-        p.colors.some((c) => selectedColors.includes(c));
+        p.colors?.some((c) => selectedColors.includes(c));
       const priceMatch = p.price >= priceRange[0] && p.price <= priceRange[1];
       const materialMatch =
         !selectedMaterial || p.material === selectedMaterial;
-
       return sizeMatch && colorMatch && priceMatch && materialMatch;
     });
   }, [
@@ -63,256 +88,656 @@ export default function CategoryProductsPage({ params }) {
     selectedMaterial,
   ]);
 
-  // Toggle handlers for multi-select filters
+  // --- Toggle handlers
   function toggleSize(size) {
     setSelectedSizes((prev) =>
-      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
+      prev.includes(size) ? prev.filter((p) => p !== size) : [...prev, size]
     );
   }
-
   function toggleColor(color) {
     setSelectedColors((prev) =>
-      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]
+      prev.includes(color) ? prev.filter((p) => p !== color) : [...prev, color]
     );
+  }
+  function resetFilters() {
+    setSelectedSizes([]);
+    setSelectedColors([]);
+    setSelectedMaterial("");
+    setPriceRange([0, 10000]);
+  }
+
+  // --- click outside & Esc to close drawer
+  const drawerRef = useRef(null);
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === "Escape") setIsFilterOpen(false);
+    }
+    function onPointerDown(e) {
+      if (
+        isFilterOpen &&
+        drawerRef.current &&
+        !drawerRef.current.contains(e.target)
+      ) {
+        setIsFilterOpen(false);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointerDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, [isFilterOpen]);
+
+  // focus first element when drawer opens
+  useEffect(() => {
+    if (isFilterOpen) {
+      const t = setTimeout(() => {
+        firstFilterFocusRef.current?.focus();
+      }, 200);
+      return () => clearTimeout(t);
+    }
+  }, [isFilterOpen]);
+
+  // --- Framer Motion variants
+  const backdropVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+  };
+
+  const drawerVariants = {
+    hidden: { x: "-110%", opacity: 0 },
+    visible: {
+      x: 0,
+      opacity: 1,
+      transition: { type: "spring", stiffness: 260, damping: 30 },
+    },
+    exit: {
+      x: "-110%",
+      opacity: 0,
+      transition: { ease: "easeInOut", duration: 0.18 },
+    },
+  };
+
+  const productContainerVariants = {
+    visible: {
+      transition: {
+        staggerChildren: 0.06,
+      },
+    },
+  };
+
+  const productCardVariants = {
+    hidden: { opacity: 0, y: 18, scale: 0.99 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { duration: 0.36, ease: "easeOut" },
+    },
+  };
+
+  // small util for price input handlers
+  function updateMinPrice(value) {
+    const v = Math.max(0, Math.min(Number(value || 0), priceRange[1]));
+    setPriceRange([v, priceRange[1]]);
+  }
+  function updateMaxPrice(value) {
+    const v = Math.max(
+      Number(value || 0),
+      Math.max(priceRange[0], Number(value || 0))
+    );
+    setPriceRange([priceRange[0], v]);
   }
 
   return (
-    <FadeUp>
-      <section className="min-h-screen py-6 px-3 bg-gradient-to-b from-gray-100 to-white max-w-full">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-6 px-4 text-center capitalize tracking-wide">
-          {category} Collection
-        </h2>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white text-gray-900">
+      {/* Header bar (sticky) */}
+      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-sm border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight capitalize">
+            {category} Collection
+          </h1>
 
-        {/* Grid Container with minimal filter width */}
-        <div className="grid grid-cols-[100px_1fr] sm:grid-cols-[150px_1fr] gap-4 max-w-7xl mx-auto min-h-[80vh]">
-          {/* Filters Sidebar */}
-          <aside
-            className="bg-white rounded-xl shadow-lg p-3
-                       overflow-y-auto max-h-[75vh]
-                       sticky top-4 left-0
-                       w-[100px] sm:w-[150px]
-                       text-xs sm:text-sm
-                       scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
-            aria-label="Product Filters"
-          >
-            <h3 className="text-base font-semibold mb-4 border-b pb-1 text-gray-800">
-              Filters
-            </h3>
+          <div className="flex items-center gap-3">
+            {/* Mobile filter button */}
+            <button
+              onClick={() => setIsFilterOpen(true)}
+              aria-expanded={isFilterOpen}
+              aria-controls="filters-drawer"
+              className="lg:hidden inline-flex items-center gap-2 px-3 py-2 rounded-full bg-black text-white shadow hover:opacity-95 transition"
+            >
+              <FaFilter />
+              <span className="text-sm font-medium">Filters</span>
+            </button>
 
-            {/* Sizes */}
-            <div className="mb-5">
-              <h4 className="font-semibold text-gray-700 mb-2">Sizes</h4>
-              <div className="flex flex-wrap gap-1 justify-center">
-                {sizesOptions.map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => toggleSize(size)}
-                    className={`cursor-pointer px-1.5 py-0.5 rounded-full border text-xs font-medium transition
-                      ${
-                        selectedSizes.includes(size)
-                          ? "bg-black text-white border-black shadow-md"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                      }`}
-                    aria-pressed={selectedSizes.includes(size)}
-                    aria-label={`Filter size ${size}`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Colors */}
-            <div className="mb-5">
-              <h4 className="font-semibold text-gray-700 mb-2">Colors</h4>
-              <div className="flex flex-wrap gap-1 justify-center">
-                {colorsOptions.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => toggleColor(color)}
-                    title={color}
-                    aria-label={`Filter by color ${color}`}
-                    style={{ backgroundColor: color }}
-                    className={`w-5 h-5 rounded-full border-2 transition-shadow focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-black
-                      ${
-                        selectedColors.includes(color)
-                          ? "border-black shadow-lg"
-                          : "border-transparent hover:border-gray-400"
-                      }`}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Material */}
-            <div className="mb-5">
-              <h4 className="font-semibold text-gray-700 mb-2">Material</h4>
-              <select
-                value={selectedMaterial}
-                onChange={(e) => setSelectedMaterial(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-2 py-1 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black text-xs sm:text-sm"
-                aria-label="Filter by material"
+            {/* Desktop small-ish filters summary */}
+            <div className="hidden lg:flex items-center gap-2">
+              <span className="text-sm text-gray-600">
+                {filteredProducts.length} items
+              </span>
+              <button
+                onClick={resetFilters}
+                className="text-sm px-3 py-1 rounded-full border border-gray-200 hover:bg-gray-100 transition"
               >
-                <option value="">All</option>
-                {materialsOptions.map((mat) => (
-                  <option key={mat} value={mat}>
-                    {mat}
-                  </option>
-                ))}
-              </select>
+                Reset
+              </button>
             </div>
-
-            {/* Price Range */}
-            <div>
-              <h4 className="font-semibold text-gray-700 mb-2">Price (₨)</h4>
-              <div className="flex gap-1">
-                <input
-                  type="number"
-                  min={0}
-                  max={priceRange[1]}
-                  value={priceRange[0]}
-                  onChange={(e) =>
-                    setPriceRange([
-                      Math.min(+e.target.value || 0, priceRange[1]),
-                      priceRange[1],
-                    ])
-                  }
-                  className="w-1/2 rounded-md border border-gray-300 px-1 py-1 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black text-xs"
-                  placeholder="Min"
-                  aria-label="Minimum price"
-                />
-                <input
-                  type="number"
-                  min={priceRange[0]}
-                  max={10000}
-                  value={priceRange[1]}
-                  onChange={(e) =>
-                    setPriceRange([
-                      priceRange[0],
-                      Math.max(+e.target.value || 0, priceRange[0]),
-                    ])
-                  }
-                  className="w-1/2 rounded-md border border-gray-300 px-1 py-1 text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-black text-xs"
-                  placeholder="Max"
-                  aria-label="Maximum price"
-                />
-              </div>
-            </div>
-          </aside>
-
-          {/* Products Grid */}
-          <main className="overflow-auto">
-            {filteredProducts.length === 0 ? (
-              <p className="text-center text-gray-500 text-base mt-16">
-                No products found with the selected filters.
-              </p>
-            ) : (
-              <div
-                className="grid gap-5
-                           grid-cols-1
-                           sm:grid-cols-2
-                           md:grid-cols-3
-                           lg:grid-cols-4"
-              >
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            )}
-          </main>
+          </div>
         </div>
-      </section>
-    </FadeUp>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+        {/* ---------- Desktop Sidebar (always visible on lg+) ---------- */}
+        <aside className="hidden lg:block sticky top-24 self-start">
+          <div className="bg-white rounded-2xl shadow-md p-4 w-full">
+            <FilterPanel
+              sizesOptions={sizesOptions}
+              colorsOptions={colorsOptions}
+              materialsOptions={materialsOptions}
+              selectedSizes={selectedSizes}
+              selectedColors={selectedColors}
+              selectedMaterial={selectedMaterial}
+              priceRange={priceRange}
+              toggleSize={toggleSize}
+              toggleColor={toggleColor}
+              setSelectedMaterial={setSelectedMaterial}
+              setPriceRange={setPriceRange}
+              resetFilters={resetFilters}
+              firstFocusRef={firstFilterFocusRef}
+            />
+          </div>
+        </aside>
+
+        {/* ---------- Content (Products Grid) ---------- */}
+        <section>
+          {/* mobile inline filter summary row */}
+          <div className="flex items-center justify-between mb-4 lg:hidden">
+            <div className="text-sm text-gray-600">
+              {filteredProducts.length} items
+            </div>
+            <div className="flex gap-2 items-center">
+              <button
+                onClick={() => setIsFilterOpen(true)}
+                className="px-3 py-1 rounded-full border border-gray-200 text-sm flex items-center gap-2"
+              >
+                <FaFilter /> Filters
+              </button>
+              <button
+                onClick={resetFilters}
+                className="px-3 py-1 rounded-full border border-gray-200 text-sm"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+
+          {/* product grid */}
+          {filteredProducts.length === 0 ? (
+            <div className="py-28 text-center">
+              <p className="text-lg text-gray-500">
+                No products match your filters.
+              </p>
+              <button
+                onClick={resetFilters}
+                className="mt-6 px-4 py-2 rounded-full bg-black text-white"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <motion.div
+              variants={productContainerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6"
+            >
+              <AnimatePresence>
+                {filteredProducts.map((product, i) => (
+                  <motion.div
+                    key={product.id}
+                    variants={productCardVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
+        </section>
+      </main>
+
+      {/* ---------- Mobile Drawer (AnimatePresence) ---------- */}
+      <AnimatePresence>
+        {isFilterOpen && (
+          <motion.div
+            className="fixed inset-0 z-40 flex lg:hidden"
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            aria-hidden={!isFilterOpen}
+          >
+            {/* Backdrop */}
+            <motion.div
+              className="absolute inset-0 bg-black/40"
+              variants={backdropVariants}
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              onClick={() => setIsFilterOpen(false)}
+            />
+
+            {/* Drawer */}
+            <motion.aside
+              id="filters-drawer"
+              ref={drawerRef}
+              className="relative w-[80%] max-w-xs bg-white h-full shadow-2xl p-4 overflow-y-auto"
+              variants={drawerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              role="dialog"
+              aria-modal="true"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">Filters</h3>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      resetFilters();
+                      // keep drawer open to show cleared state
+                    }}
+                    className="text-sm px-3 py-1 rounded-full border border-gray-200 hover:bg-gray-50"
+                  >
+                    Clear
+                  </button>
+
+                  <button
+                    onClick={() => setIsFilterOpen(false)}
+                    aria-label="Close filters"
+                    className="p-2 rounded-full hover:bg-gray-100"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <FilterPanel
+                  sizesOptions={sizesOptions}
+                  colorsOptions={colorsOptions}
+                  materialsOptions={materialsOptions}
+                  selectedSizes={selectedSizes}
+                  selectedColors={selectedColors}
+                  selectedMaterial={selectedMaterial}
+                  priceRange={priceRange}
+                  toggleSize={toggleSize}
+                  toggleColor={toggleColor}
+                  setSelectedMaterial={setSelectedMaterial}
+                  setPriceRange={setPriceRange}
+                  resetFilters={() => {
+                    resetFilters();
+                    // focus the first input after clearing
+                    firstFilterFocusRef.current?.focus();
+                  }}
+                  firstFocusRef={firstFilterFocusRef}
+                />
+                {/* Apply button */}
+                <div className="sticky bottom-0 left-0 right-0 bg-white/60 backdrop-blur-sm py-3 -mx-4 px-4">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setIsFilterOpen(false)}
+                      className="flex-1 py-2 rounded-full bg-black text-white font-semibold shadow"
+                    >
+                      Apply Filters
+                    </button>
+                    <button
+                      onClick={() => {
+                        resetFilters();
+                        setIsFilterOpen(false);
+                      }}
+                      className="py-2 px-4 rounded-full border border-gray-200"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.aside>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
+/* ===========================================================================
+   FilterPanel - reusable UI block for both mobile drawer & desktop sidebar
+   =========================================================================== */
+function FilterPanel({
+  sizesOptions = [],
+  colorsOptions = [],
+  materialsOptions = [],
+  selectedSizes = [],
+  selectedColors = [],
+  selectedMaterial = "",
+  priceRange = [0, 10000],
+  toggleSize = () => {},
+  toggleColor = () => {},
+  setSelectedMaterial = () => {},
+  setPriceRange = () => {},
+  resetFilters = () => {},
+  firstFocusRef = null,
+}) {
+  // micro-animation variants
+  const chipVariants = {
+    rest: { scale: 1 },
+    hover: { scale: 1.04 },
+    active: { scale: 0.98 },
+  };
+
+  return (
+    <div className="text-sm text-gray-800">
+      {/* Sizes */}
+      <section aria-labelledby="label-sizes" className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <h4 id="label-sizes" className="font-semibold text-gray-900">
+            Sizes
+          </h4>
+          <span className="text-xs text-gray-500">
+            {sizesOptions.length} options
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {sizesOptions.map((size, idx) => {
+            const active = selectedSizes.includes(size);
+            return (
+              <motion.button
+                key={size}
+                onClick={() => toggleSize(size)}
+                initial="rest"
+                whileHover="hover"
+                whileTap="active"
+                variants={chipVariants}
+                aria-pressed={active}
+                ref={idx === 0 ? firstFocusRef : undefined}
+                className={`px-3 py-1 rounded-full border shadow-sm text-sm font-medium transition
+                  ${
+                    active
+                      ? "bg-black text-white border-black shadow-lg"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                  }`}
+              >
+                {size}
+              </motion.button>
+            );
+          })}
+        </div>
+      </section>
+
+      <hr className="my-4 border-t border-gray-100" />
+
+      {/* Colors */}
+      <section aria-labelledby="label-colors" className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <h4 id="label-colors" className="font-semibold text-gray-900">
+            Colors
+          </h4>
+          <span className="text-xs text-gray-500">
+            {colorsOptions.length} options
+          </span>
+        </div>
+
+        <div className="flex flex-wrap gap-2 items-center">
+          {colorsOptions.map((color) => {
+            const active = selectedColors.includes(color);
+            // some color strings may be names, hex codes, rgb; we trust the value for style
+            return (
+              <button
+                key={color}
+                onClick={() => toggleColor(color)}
+                title={color}
+                aria-pressed={active}
+                className={`w-8 h-8 rounded-full border-2 transition-shadow flex items-center justify-center focus:outline-none
+                  ${
+                    active
+                      ? "ring-2 ring-offset-2 ring-black border-black shadow-md"
+                      : "border-transparent hover:border-gray-300"
+                  }`}
+                style={{ backgroundColor: color }}
+              >
+                {/* when active, show a small check */}
+                {active && (
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    className="text-white opacity-90"
+                  >
+                    <path
+                      fill="white"
+                      d="M20.285,6.709c-0.39-0.39-1.023-0.39-1.414,0L9,16.58L5.129,12.71c-0.39-0.39-1.024-0.39-1.414,0 c-0.39,0.39-0.39,1.024,0,1.414l4.95,4.95c0.39,0.39,1.023,0.39,1.414,0l10.206-10.206C20.676,7.733,20.676,7.099,20.285,6.709z"
+                    />
+                  </svg>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <hr className="my-4 border-t border-gray-100" />
+
+      {/* Material */}
+      <section aria-labelledby="label-material" className="mb-4">
+        <h4 id="label-material" className="font-semibold text-gray-900 mb-2">
+          Material
+        </h4>
+        <select
+          value={selectedMaterial}
+          onChange={(e) => setSelectedMaterial(e.target.value)}
+          className="w-full rounded-lg border border-gray-200 px-3 py-2 shadow-sm focus:ring-2 focus:ring-offset-1 focus:ring-black"
+        >
+          <option value="">All materials</option>
+          {materialsOptions.map((mat) => (
+            <option value={mat} key={mat}>
+              {mat}
+            </option>
+          ))}
+        </select>
+      </section>
+
+      <hr className="my-4 border-t border-gray-100" />
+
+      {/* Price */}
+      <section aria-labelledby="label-price" className="mb-4">
+        <h4 id="label-price" className="font-semibold text-gray-900 mb-2">
+          Price (₨)
+        </h4>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            value={priceRange[0]}
+            min={0}
+            onChange={(e) => {
+              const val = Number(e.target.value || 0);
+              setPriceRange([Math.min(val, priceRange[1]), priceRange[1]]);
+            }}
+            className="w-1/2 rounded-lg border border-gray-200 px-3 py-2 shadow-sm focus:ring-2 focus:ring-black"
+            aria-label="Minimum price"
+          />
+          <input
+            type="number"
+            value={priceRange[1]}
+            min={0}
+            onChange={(e) => {
+              const val = Number(e.target.value || 0);
+              setPriceRange([priceRange[0], Math.max(val, priceRange[0])]);
+            }}
+            className="w-1/2 rounded-lg border border-gray-200 px-3 py-2 shadow-sm focus:ring-2 focus:ring-black"
+            aria-label="Maximum price"
+          />
+        </div>
+
+        <div className="mt-3 text-xs text-gray-500">
+          Adjusted live — products update as you edit.
+        </div>
+      </section>
+
+      <hr className="my-4 border-t border-gray-100" />
+
+      {/* Actions */}
+      <div className="flex gap-2">
+        <button
+          onClick={resetFilters}
+          className="flex-1 py-2 rounded-lg border border-gray-200 hover:bg-gray-50"
+        >
+          Reset
+        </button>
+        <button className="flex-1 py-2 rounded-lg bg-black text-white shadow">
+          Apply
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ===========================================================================
+   ProductCard - polished, animated product card
+   =========================================================================== */
 function ProductCard({ product }) {
   const [hovered, setHovered] = useState(false);
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || "");
   const [quantity, setQuantity] = useState(1);
 
+  // Card hover animation variants
+  const cardHover = {
+    initial: { y: 0 },
+    hover: {
+      y: -6,
+      transition: { type: "spring", stiffness: 300, damping: 20 },
+    },
+  };
+
+  const imageVariants = {
+    rest: { scale: 1, rotate: 0 },
+    hover: { scale: 1.08, rotate: 0.5, transition: { duration: 0.45 } },
+  };
+
   return (
-    <article
-      className="group relative bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition duration-300 flex flex-col"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+    <motion.article
+      layout
+      initial="initial"
+      whileHover="hover"
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      variants={cardHover}
+      className="group bg-white rounded-2xl shadow-md overflow-hidden flex flex-col relative"
+      role="article"
+      aria-labelledby={`product-${product.id}`}
     >
-      {/* Image + Icons */}
-      <div className="relative w-full h-64 sm:h-72 md:h-72 bg-white flex items-center justify-center overflow-hidden rounded-t-2xl">
-        <Link
-          href={`/products/${product.slug}`}
-          className="w-full h-full block relative"
+      {/* Image area with layered overlay */}
+      <div className="relative w-full h-64 bg-gradient-to-b from-white to-gray-50 flex items-center justify-center overflow-hidden">
+        <motion.div
+          variants={imageVariants}
+          initial="rest"
+          animate={hovered ? "hover" : "rest"}
+          className="relative w-full h-full flex items-center justify-center"
         >
-          <Image
-            src={
-              hovered && product.images.length > 1
-                ? product.images[1]
-                : product.images[0]
-            }
-            alt={product.title}
-            fill
-            className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
-            priority
-          />
-        </Link>
+          <Link href={`/products/${product.slug}`} className="absolute inset-0">
+            {/* Image fill */}
+            <Image
+              src={product.images?.[0]}
+              alt={product.title}
+              fill
+              className="object-contain p-4"
+              sizes="(max-width: 640px) 100vw, 50vw"
+              priority
+            />
+          </Link>
+        </motion.div>
 
-        <button
-          aria-label="Add to favorites"
-          className="absolute top-3 right-3 bg-white/90 p-2 rounded-full shadow hover:bg-red-600 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600"
+        {/* Floating rating badge */}
+        <div className="absolute top-3 left-3 bg-yellow-400 text-white px-2 py-0.5 rounded-full text-xs font-bold shadow">
+          <FaStar className="inline mr-1" />{" "}
+          {product.rating?.toFixed?.(1) ?? "—"}
+        </div>
+
+        {/* Action buttons (appear on hover) */}
+        <div
+          className={`absolute right-3 top-3 flex flex-col gap-2 transition-opacity ${
+            hovered ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
         >
-          <FaHeart className="text-base sm:text-lg" />
-        </button>
-
-        <div className="absolute top-3 left-3 bg-yellow-400 text-white text-xs sm:text-sm font-bold px-2 py-0.5 rounded-full shadow flex items-center space-x-1 select-none">
-          <FaStar className="inline" /> <span>{product.rating.toFixed(1)}</span>
+          <button
+            aria-label="Add to wishlist"
+            className="p-2 bg-white rounded-full shadow hover:bg-red-600 hover:text-white transition"
+          >
+            <FaHeart />
+          </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-4 sm:p-5 flex flex-col flex-grow">
+      {/* Content block */}
+      <div className="p-4 flex flex-col gap-3 flex-1">
         <h3
-          title={product.title}
-          className="font-semibold text-gray-900 text-base sm:text-lg truncate mb-1"
+          id={`product-${product.id}`}
+          className="text-sm sm:text-base font-semibold text-gray-900 line-clamp-2"
         >
           {product.title}
         </h3>
-        <p className="text-lg sm:text-xl font-extrabold text-gray-900 mb-4">
-          ₨ {product.price.toLocaleString()}
-        </p>
+
+        <div className="flex items-center justify-between">
+          <div className="text-lg font-extrabold text-gray-900">
+            ₨ {Number(product.price).toLocaleString()}
+          </div>
+          <div className="text-xs text-gray-500">
+            SKU: {product.sku ?? product.id}
+          </div>
+        </div>
 
         {/* Sizes */}
-        <div className="flex gap-2 flex-wrap mb-4 sm:mb-5">
-          {product.sizes?.map((size) => (
-            <button
-              key={size}
-              onClick={() => setSelectedSize(size)}
-              className={`cursor-pointer px-3 py-1 rounded-full border text-xs sm:text-sm font-medium transition ${
-                selectedSize === size
-                  ? "bg-black text-white border-black shadow-md"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-              }`}
-              aria-pressed={selectedSize === size}
-            >
-              {size}
-            </button>
-          ))}
+        <div className="flex gap-2 flex-wrap">
+          {product.sizes?.map((size) => {
+            const active = selectedSize === size;
+            return (
+              <button
+                key={size}
+                onClick={() => setSelectedSize(size)}
+                className={`px-3 py-1 text-xs rounded-full border shadow-sm transition 
+                  ${
+                    active
+                      ? "bg-black text-white border-black"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                  }`}
+                aria-pressed={active}
+              >
+                {size}
+              </button>
+            );
+          })}
         </div>
 
         {/* Quantity + Add to Cart */}
-        <div className="flex items-center justify-between mt-auto">
-          <div className="flex items-center border rounded-full overflow-hidden shadow-sm">
+        <div className="mt-auto flex items-center justify-between gap-3">
+          <div className="flex items-center rounded-full border overflow-hidden">
             <button
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="px-3 py-1 hover:bg-gray-200 transition"
+              className="px-2 py-1 hover:bg-gray-100 transition"
               aria-label="Decrease quantity"
             >
-              –
+              -
             </button>
-            <span className="px-4 py-1 font-medium">{quantity}</span>
+            <div className="px-2 py-1 font-medium">{quantity}</div>
             <button
               onClick={() => setQuantity((q) => q + 1)}
-              className="px-3 py-1 hover:bg-gray-200 transition"
+              className="px-3 py-1 hover:bg-gray-100 transition"
               aria-label="Increase quantity"
             >
               +
@@ -320,13 +745,21 @@ function ProductCard({ product }) {
           </div>
 
           <button
-            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-900 transition shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-            aria-label={`Add ${quantity} ${product.title} to cart`}
+            onClick={() => {
+              // placeholder action — hook into cart logic here
+              // ripple effect using small scale animation
+            }}
+            className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white font-medium shadow hover:scale-[0.995] transition-transform"
+            aria-label={`Add ${product.title} to cart`}
           >
-            <FaShoppingCart className="text-sm sm:text-base" /> Add
+            <FaShoppingCart />
+            Add
           </button>
         </div>
       </div>
-    </article>
+
+      {/* subtle bottom gradient for depth */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent" />
+    </motion.article>
   );
 }
