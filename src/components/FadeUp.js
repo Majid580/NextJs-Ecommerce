@@ -6,7 +6,7 @@ import { useInView } from "react-intersection-observer";
 export default function FadeUp({ children, delay = 0 }) {
   const { ref, inView } = useInView({
     threshold: 0.1,
-    triggerOnce: true, // will replay on re-enter
+    triggerOnce: false, // will replay on re-enter
   });
 
   return (

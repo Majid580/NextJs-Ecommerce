@@ -21,14 +21,16 @@ export default function TrendingThisWeek() {
       <FadeUp>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
           {trendingProducts.map((product, index) => (
-            <div
-              key={product.id}
-              className={`${
-                index >= trendingProducts.length / 2 ? "hidden sm:block" : ""
-              }`}
-            >
-              <ProductCard product={product} />
-            </div>
+            <FadeUp>
+              <div
+                key={product.id}
+                className={`${
+                  index >= trendingProducts.length / 2 ? "hidden sm:block" : ""
+                }`}
+              >
+                <ProductCard product={product} />
+              </div>
+            </FadeUp>
           ))}
           {/* Show All Products Button */}
           <div className="col-span-full flex justify-center mt-6">
