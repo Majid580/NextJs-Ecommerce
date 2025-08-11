@@ -1,6 +1,6 @@
-import "./globals.css"; // 👈 must be here so Tailwind/global CSS is loaded
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+// src/app/layout.jsx
+import "./globals.css";
+import ClientLayout from "./ClientLayout";
 
 export const metadata = {
   title: "Sajid Garments",
@@ -11,9 +11,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="bg-white text-black">
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

@@ -70,7 +70,7 @@ export default function ProductDetail({ params }) {
               className="object-contain w-full h-auto bg-white p-4"
             />
           </div>
-          <div className="flex flex-wrap gap-2 mt-4 justify-start">
+          <div className="flex flex-wrap gap-1 mt-4 justify-start">
             {product.images.map((img, i) => (
               <button
                 key={i}

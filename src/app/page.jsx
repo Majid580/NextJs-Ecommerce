@@ -1,12 +1,31 @@
+"use client";
+import React, { useEffect } from "react"; // <-- Import useEffect directly
 import Home from "@/components/Home";
-import React from "react";
+import ReduxProvider from "@/app/ReduxProvider";
+import { useDispatch } from "react-redux";
+import { setCart } from "@/redux/slices/cartSlice";
 
-const page = () => {
+export default function Page() {
   return (
-    <div>
-      <Home />
-    </div>
+    <ReduxProvider>
+      <InnerPage />
+    </ReduxProvider>
   );
-};
+}
 
-export default page;
+function InnerPage() {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    try {
+      const serializedCart = localStorage.getItem("cart");
+      if (serializedCart) {
+        dispatch(setCart(JSON.parse(serializedCart)));
+      }
+    } catch (e) {
+      console.warn("Failed to load cart from localStorage", e);
+    }
+  }, [dispatch]);
+
+  return <Home />;
+}

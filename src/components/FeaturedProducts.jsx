@@ -6,7 +6,14 @@ import { FaHeart, FaShoppingCart, FaStar } from "react-icons/fa";
 import { allProducts } from "@/data/allProducts";
 import Link from "next/link";
 import FadeUp from "./FadeUp";
-
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addItem,
+  removeItem,
+  increaseQuantity,
+  decreaseQuantity,
+  selectCartItems,
+} from "@/redux/slices/cartSlice";
 export default function FeaturedProducts() {
   const featuredProducts = allProducts.filter((x) => x.featured);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
@@ -38,7 +45,7 @@ function ProductCard({ product }) {
   const [hovered, setHovered] = useState(false);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
   const [quantity, setQuantity] = useState(1);
-
+  const dispatch = useDispatch();
   return (
     <div
       className="group relative bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition duration-300"
@@ -111,7 +118,13 @@ function ProductCard({ product }) {
             </button>
           </div>
 
-          <button className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-900 transition">
+          <button
+            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-900 transition"
+            onClick={() => {
+              dispatch(addItem(product));
+              console.log(product);
+            }}
+          >
             <FaShoppingCart /> Add
           </button>
         </div>
