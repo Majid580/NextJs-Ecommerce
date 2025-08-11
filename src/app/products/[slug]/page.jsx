@@ -70,7 +70,7 @@ export default function ProductDetail({ params }) {
               className="object-contain w-full h-auto bg-white p-4"
             />
           </div>
-          <div className="flex flex-wrap gap-3 mt-4 justify-start">
+          <div className="flex flex-wrap gap-2 mt-4 justify-start">
             {product.images.map((img, i) => (
               <button
                 key={i}
@@ -85,8 +85,8 @@ export default function ProductDetail({ params }) {
                 <Image
                   src={img}
                   alt={`Thumbnail ${i + 1}`}
-                  width={80}
-                  height={80}
+                  width={40}
+                  height={60}
                   className="object-contain rounded-md"
                   unoptimized
                   loading="lazy"
