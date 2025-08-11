@@ -14,6 +14,7 @@ import {
   decreaseQuantity,
   selectCartItems,
 } from "@/redux/slices/cartSlice";
+import toast from "react-hot-toast";
 export default function FeaturedProducts() {
   const featuredProducts = allProducts.filter((x) => x.featured);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
@@ -122,6 +123,7 @@ function ProductCard({ product }) {
             className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-900 transition"
             onClick={() => {
               dispatch(addItem(product));
+              toast.success(`${product.title} added to cart!`);
               console.log(product);
             }}
           >

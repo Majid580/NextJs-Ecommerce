@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
+import toast from "react-hot-toast";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -17,7 +18,14 @@ import {
 } from "react-icons/fa";
 import { allProducts } from "@/data/allProducts";
 import FadeUp from "@/components/FadeUp";
-
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addItem,
+  removeItem,
+  increaseQuantity,
+  decreaseQuantity,
+  selectCartItems,
+} from "@/redux/slices/cartSlice";
 export default function ProductsPage() {
   // Full product list (allProducts should be in src/data/allProducts.js)
   const products = allProducts;
@@ -542,7 +550,7 @@ function ProductCard({ product }) {
   const [quantity, setQuantity] = useState(1);
   const mainImg = product.images?.[0] || "/images/placeholder.png";
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
-
+  const dispatch = useDispatch();
   return (
     <FadeUp>
       <article
@@ -637,7 +645,13 @@ function ProductCard({ product }) {
               </button>
             </div>
 
-            <button className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-900 transition">
+            <button
+              className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-900 transition"
+              onClick={() => {
+                dispatch(addItem(product));
+                toast.success(`${product.title} added to cart!`);
+              }}
+            >
               <FaShoppingCart /> Add
             </button>
           </div>

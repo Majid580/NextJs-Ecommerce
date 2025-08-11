@@ -5,7 +5,15 @@ import Image from "next/image";
 import { FaShoppingCart, FaFacebookF, FaInstagram } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { allProducts } from "@/data/allProducts";
-
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addItem,
+  removeItem,
+  increaseQuantity,
+  decreaseQuantity,
+  selectCartItems,
+} from "@/redux/slices/cartSlice";
+import toast from "react-hot-toast";
 export default function ProductDetail({ params }) {
   const product = allProducts.find((p) => p.slug === params.slug);
 
@@ -55,7 +63,7 @@ export default function ProductDetail({ params }) {
     setAddingToCart(true);
     setTimeout(() => setAddingToCart(false), 2500);
   }
-
+  const dispatch = useDispatch();
   return (
     <main className="max-w-5xl mx-auto p-4 sm:p-8 font-sans min-h-screen text-gray-900">
       <div className="flex flex-col md:flex-row gap-10">
@@ -191,7 +199,10 @@ export default function ProductDetail({ params }) {
             {/* Add To Cart */}
             <div className="relative max-w-xs">
               <button
-                onClick={handleAddToCart}
+                onClick={() => {
+                  dispatch(addItem(product));
+                  toast.success(`${product.title} added to cart!`);
+                }}
                 disabled={!canAddToCart || addingToCart}
                 aria-disabled={!canAddToCart || addingToCart}
                 className="flex items-center justify-center gap-3 bg-gray-900 text-white px-6 py-3 rounded-md font-semibold w-full hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition"

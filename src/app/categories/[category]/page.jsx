@@ -13,7 +13,15 @@ import {
   FaChevronDown,
 } from "react-icons/fa";
 import { allProducts } from "@/data/allProducts";
-
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addItem,
+  removeItem,
+  increaseQuantity,
+  decreaseQuantity,
+  selectCartItems,
+} from "@/redux/slices/cartSlice";
+import toast from "react-hot-toast";
 /**
  * CategoryProductsPage
  *
@@ -629,7 +637,7 @@ function ProductCard({ product }) {
     rest: { scale: 1, rotate: 0 },
     hover: { scale: 1.08, rotate: 0.5, transition: { duration: 0.45 } },
   };
-
+  const dispatch = useDispatch();
   return (
     <motion.article
       layout
@@ -746,8 +754,8 @@ function ProductCard({ product }) {
 
           <button
             onClick={() => {
-              // placeholder action — hook into cart logic here
-              // ripple effect using small scale animation
+              dispatch(addItem(product));
+              toast.success(`${product.title} added to cart!`);
             }}
             className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white font-medium shadow hover:scale-[0.995] transition-transform"
             aria-label={`Add ${product.title} to cart`}

@@ -6,6 +6,15 @@ import { FaShoppingCart } from "react-icons/fa";
 import { IoIosHeartEmpty } from "react-icons/io";
 import { CiStar } from "react-icons/ci";
 import Link from "next/link";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  addItem,
+  removeItem,
+  increaseQuantity,
+  decreaseQuantity,
+  selectCartItems,
+} from "@/redux/slices/cartSlice";
+import toast from "react-hot-toast";
 export default function ProductCard({ product }) {
   const [hovered, setHovered] = useState(false);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
@@ -14,7 +23,7 @@ export default function ProductCard({ product }) {
   const toggleHover = () => setHovered(!hovered);
   const increaseQuantity = () => setQuantity((q) => q + 1);
   const decreaseQuantity = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
-
+  const dispatch = useDispatch();
   return (
     <div className="rounded-md p-3 shadow-lg hover:shadow-2xl transition w-full max-w-xs mx-auto bg-white">
       <div
@@ -99,6 +108,10 @@ export default function ProductCard({ product }) {
         <button
           type="button"
           className="flex items-center space-x-1 bg-black text-white px-3 py-2 rounded hover:bg-gray-900 transition text-sm"
+          onClick={() => {
+            dispatch(addItem(product));
+            toast.success(`${product.title} added to cart!`);
+          }}
         >
           <FaShoppingCart />
           <span>Add to cart</span>
