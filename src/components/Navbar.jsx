@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 import Link from "next/link";
 import CartDropdown from "./CartDropdown";
+
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -18,8 +19,7 @@ export default function Navbar() {
 
   useEffect(() => {
     function handleScroll() {
-      if (window.scrollY > 15) setScrolled(true);
-      else setScrolled(false);
+      setScrolled(window.scrollY > 15);
     }
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -36,22 +36,9 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  function handlePress(e) {
-    e.currentTarget.classList.add("pressed");
-    setTimeout(() => {
-      e.currentTarget.classList.remove("pressed");
-    }, 130);
-  }
-
   return (
     <>
       <style>{`
-        /* Press animation */
-        .pressed {
-          transform: scale(0.95);
-          transition: transform 0.13s ease-in-out;
-        }
-
         /* Underline hover effect */
         .nav-link-underline {
           position: relative;
@@ -107,11 +94,9 @@ export default function Navbar() {
           font-size: 1rem;
           color: #444;
           background-color: #fafafa;
-          box-shadow: none;
           transition: border-color 0.25s ease;
           width: 100%;
           max-width: 100%;
-          user-select: text;
         }
         input[type="text"]:focus {
           border-color: #666;
@@ -127,7 +112,6 @@ export default function Navbar() {
           color: #222;
           border-radius: 8px;
           transition: background-color 0.25s ease, color 0.25s ease;
-          user-select: none;
         }
         .mobile-menu-slide a:hover {
           background-color: #f2f2f2;
@@ -146,15 +130,10 @@ export default function Navbar() {
           align-items: center;
           justify-content: center;
           transition: background-color 0.25s ease, color 0.25s ease;
-          user-select: none;
         }
         .icon-button:hover {
           background-color: #eee;
           color: #111;
-        }
-        .icon-button:active {
-          transform: scale(0.9);
-          transition: transform 0.13s ease-in-out;
         }
       `}</style>
 
@@ -169,10 +148,7 @@ export default function Navbar() {
             {/* Mobile menu toggle */}
             <button
               aria-label={menuOpen ? "Close menu" : "Open menu"}
-              onClick={(e) => {
-                setMenuOpen(!menuOpen);
-                handlePress(e);
-              }}
+              onClick={() => setMenuOpen(!menuOpen)}
               className="md:hidden icon-button"
               type="button"
             >
@@ -186,7 +162,6 @@ export default function Navbar() {
             {/* Logo */}
             <Link
               href="/"
-              onClick={(e) => handlePress(e)}
               className="flex items-center space-x-2 text-gray-900"
             >
               <FaTshirt
@@ -211,7 +186,6 @@ export default function Navbar() {
                   key={label}
                   href={href}
                   className="nav-link-underline text-gray-800 font-semibold whitespace-nowrap px-3 py-2 rounded-md select-none"
-                  onClick={(e) => handlePress(e)}
                 >
                   {label}
                 </Link>
@@ -219,24 +193,14 @@ export default function Navbar() {
             </div>
 
             {/* Right icons */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center text-black space-x-4">
               {/* Shopping cart */}
-              <button
-                aria-label="Shopping cart"
-                className="icon-button"
-                onClick={(e) => handlePress(e)}
-                type="button"
-              >
-                <CartDropdown />
-              </button>
+              <CartDropdown />
 
               {/* Search button */}
               <button
                 aria-label={searchOpen ? "Close search" : "Open search"}
-                onClick={(e) => {
-                  setSearchOpen(!searchOpen);
-                  handlePress(e);
-                }}
+                onClick={() => setSearchOpen(!searchOpen)}
                 className="icon-button"
                 type="button"
               >
@@ -247,7 +211,6 @@ export default function Navbar() {
               <button
                 aria-label="User profile"
                 className="icon-button"
-                onClick={(e) => handlePress(e)}
                 type="button"
               >
                 <FaUserCircle className="w-6 h-6" />
