@@ -623,6 +623,14 @@ function ProductCard({ product }) {
   const [hovered, setHovered] = useState(false);
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || "");
   const [quantity, setQuantity] = useState(1);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const colors = product.colors?.length
+    ? product.colors
+    : ["#000000", "#FF0000", "#0000FF"];
+
+  const sizes = product.sizes?.length ? product.sizes : []; // Optional
 
   // Card hover animation variants
   const cardHover = {
@@ -636,6 +644,42 @@ function ProductCard({ product }) {
   const imageVariants = {
     rest: { scale: 1, rotate: 0 },
     hover: { scale: 1.08, rotate: 0.5, transition: { duration: 0.45 } },
+  };
+  const canAddToCart =
+    product.stock > 0 &&
+    (colors.length === 0 || selectedColor !== null) &&
+    (sizes.length === 0 || selectedSize !== null);
+
+  const handleAddToCart = () => {
+    if (!canAddToCart) {
+      if (colors.length > 0 && selectedColor === null) {
+        toast.error("Please select a color first!");
+        return;
+      }
+      if (sizes.length > 0 && selectedSize === null) {
+        toast.error("Please select a size first!");
+        return;
+      }
+      toast.error("Please select all required options.");
+      return;
+    } else {
+      setAddingToCart(true);
+      dispatch(
+        addItem({
+          id: product.id,
+          title: product.title,
+          price: product.price,
+          stock: product.stock,
+          sku: product.sku,
+          images: product.images,
+          size: selectedSize,
+          color: selectedColor,
+          quantity,
+        })
+      );
+      toast.success(`${product.title} added to cart!`);
+      setTimeout(() => setAddingToCart(false), 1000);
+    }
   };
   const dispatch = useDispatch();
   return (
@@ -731,7 +775,27 @@ function ProductCard({ product }) {
             );
           })}
         </div>
-
+        {/* Color Selector */}
+        {colors.length > 0 && (
+          <div className="mb-8">
+            <p className="mb-2 font-semibold">Select Color:</p>
+            <div className="flex space-x-4">
+              {colors.map((color, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedColor(color)}
+                  aria-label={`Select color ${color}`}
+                  style={{ backgroundColor: color }}
+                  className={`w-8 h-8 rounded-full border-2 ${
+                    selectedColor === color
+                      ? "border-gray-800 scale-120"
+                      : "border-gray-400 hover:border-gray-400"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
         {/* Quantity + Add to Cart */}
         <div className="mt-auto flex items-center justify-between gap-3">
           <div className="flex items-center rounded-full border overflow-hidden">
@@ -752,17 +816,30 @@ function ProductCard({ product }) {
             </button>
           </div>
 
-          <button
-            onClick={() => {
-              dispatch(addItem(product));
-              toast.success(`${product.title} added to cart!`);
-            }}
-            className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black text-white font-medium shadow hover:scale-[0.995] transition-transform"
-            aria-label={`Add ${product.title} to cart`}
-          >
-            <FaShoppingCart />
-            Add
-          </button>
+          {/* Add To Cart */}
+          <div className="relative max-w-xs">
+            <button
+              onClick={handleAddToCart}
+              className="flex items-center justify-center gap-3 bg-gray-900 text-white px-6 py-3 rounded-md font-semibold w-full hover:bg-gray-800 disabled:opacity-50"
+            >
+              <FaShoppingCart />
+              {addingToCart ? "Adding..." : "Add"}
+            </button>
+
+            <AnimatePresence>
+              {showTooltip && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.25 }}
+                  className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-sm rounded px-3 py-1 shadow-md"
+                >
+                  Please select all required options.
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 

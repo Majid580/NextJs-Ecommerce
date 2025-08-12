@@ -547,48 +547,96 @@ function SidebarContent({
 
 function ProductCard({ product }) {
   const [hovered, setHovered] = useState(false);
+  const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || "");
+  const [selectedColor, setSelectedColor] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const mainImg = product.images?.[0] || "/images/placeholder.png";
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+
   const dispatch = useDispatch();
+
+  const colors = product.colors?.length
+    ? product.colors
+    : ["#000000", "#FF0000", "#0000FF"];
+
+  const sizes = product.sizes?.length ? product.sizes : [];
+  const canAddToCart =
+    product.stock > 0 &&
+    (colors.length === 0 || selectedColor !== null) &&
+    (sizes.length === 0 || selectedSize !== null);
+
+  const handleAddToCart = () => {
+    if (!canAddToCart) {
+      if (colors.length > 0 && selectedColor === null) {
+        toast.error("Please select a color first!");
+        return;
+      }
+      if (sizes.length > 0 && selectedSize === null) {
+        toast.error("Please select a size first!");
+        return;
+      }
+      toast.error("Please select all required options.");
+      return;
+    } else {
+      setAddingToCart(true);
+      dispatch(
+        addItem({
+          id: product.id,
+          title: product.title,
+          price: product.price,
+          stock: product.stock,
+          sku: product.sku,
+          images: product.images,
+          size: selectedSize,
+          color: selectedColor,
+          quantity,
+        })
+      );
+      toast.success(`${product.title} added to cart!`);
+      setTimeout(() => setAddingToCart(false), 1000);
+    }
+  };
+
   return (
     <FadeUp>
       <article
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className="bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden flex flex-col"
+        className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col"
       >
-        <div className="relative w-full aspect-[4/3] bg-gray-50 flex items-center justify-center">
+        {/* Product Image */}
+        <div className="relative w-full aspect-[4/3] bg-gray-50">
           <Link
             href={`/products/${product.slug}`}
-            className="w-full h-full block relative"
+            className="block w-full h-full"
           >
             <Image
               src={hovered ? product.images[1] : product.images[0]}
               alt={product.title}
               fill
-              className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+              className="object-contain p-5 transition-transform duration-500 hover:scale-105"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               priority
             />
           </Link>
 
-          <div className="absolute left-3 top-3 bg-white/90 px-2 py-1 rounded-full shadow flex items-center gap-2">
+          {/* Rating Badge */}
+          <div className="absolute left-3 top-3 bg-white/90 px-2 py-1 rounded-full shadow text-sm flex items-center gap-1">
             <FaStar className="text-yellow-400" />
-            <span className="text-sm font-semibold">
-              {product.rating?.toFixed(1)}
-            </span>
+            {product.rating?.toFixed(1)}
           </div>
 
-          <button className="absolute right-3 top-3 bg-white/90 p-2 rounded-full shadow hover:bg-red-600 hover:text-white transition">
+          {/* Wishlist */}
+          <button className="absolute right-3 top-3 bg-white/90 p-2 rounded-full shadow hover:bg-red-500 hover:text-white transition">
             <FaHeart />
           </button>
         </div>
 
-        <div className="p-4 flex flex-col gap-3 flex-1">
+        {/* Product Details */}
+        <div className="p-5 flex flex-col gap-4 flex-1">
           <div>
             <h3
-              className="text-sm sm:text-base font-semibold text-gray-900 truncate"
+              className="text-base font-semibold text-gray-900 line-clamp-1"
               title={product.title}
             >
               {product.title}
@@ -598,62 +646,105 @@ function ProductCard({ product }) {
             </p>
           </div>
 
+          {/* Price & Stock */}
           <div className="flex items-center justify-between">
-            <div className="text-lg font-extrabold">
+            <span className="text-lg font-bold text-gray-900">
               ₨ {product.price.toLocaleString()}
-            </div>
-            <div
+            </span>
+            <span
               className={`text-xs px-2 py-1 rounded-full ${
                 product.stock > 0
-                  ? "bg-green-50 text-green-700"
-                  : "bg-red-50 text-red-700"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
               }`}
             >
               {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
-            </div>
+            </span>
           </div>
 
-          <div className="flex gap-2 mt-3">
-            {product.sizes.map((size) => (
-              <button
-                key={size}
-                onClick={() => setSelectedSize(size)}
-                className={`px-2 py-1 text-xs border rounded-full transition ${
-                  selectedSize === size
-                    ? "bg-black text-white border-black"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                }`}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center text-black justify-between mt-4">
-            <div className="flex items-center border rounded-full overflow-hidden">
+          {/* Size Selector */}
+          {sizes.length > 0 && (
+            <div className="flex gap-2 flex-wrap">
+              {sizes.map((size) => (
+                <button
+                  key={size}
+                  onClick={() => setSelectedSize(size)}
+                  className={`px-3 py-1 text-xs rounded-full border transition ${
+                    selectedSize === size
+                      ? "bg-gray-900 text-white border-gray-900"
+                      : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Color Selector */}
+          {colors.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold mb-1">Colors</p>
+              <div className="flex gap-3">
+                {colors.map((color, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedColor(color)}
+                    aria-label={`Select color ${color}`}
+                    style={{ backgroundColor: color }}
+                    className={`w-8 h-8 rounded-full border-2 ${
+                      selectedColor === color
+                        ? "border-gray-800 scale-120"
+                        : "border-gray-400 hover:border-gray-400"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Quantity & Add to Cart */}
+          <div className="flex items-center justify-between mx-[-20px] mt-auto">
+            <div className="flex items-center btn btn-outline bg-white text-black border rounded-full overflow-hidden mx-0.75">
               <button
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="px-2 py-1 hover:bg-gray-200"
+                className="px-2 py-1 "
               >
                 -
               </button>
-              <span className="px-3 py-1">{quantity}</span>
+              <span className="px-0">{quantity}</span>
               <button
                 onClick={() => setQuantity((q) => q + 1)}
-                className="px-2 py-1 hover:bg-gray-200"
+                className="px-2 py-1 hover:cursor-pointer"
               >
                 +
               </button>
             </div>
 
-            <button
-              className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full hover:bg-gray-900 transition"
-              onClick={() => {
-                dispatch(addItem(product));
-                toast.success(`${product.title} added to cart!`);
-              }}
-            >
-              <FaShoppingCart /> Add
-            </button>
+            <div className="relative w-32">
+              <button
+                onClick={handleAddToCart}
+                className="flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-md font-medium hover:bg-gray-800 disabled:opacity-50"
+              >
+                <FaShoppingCart />
+                {addingToCart ? "Adding..." : "Add"}
+              </button>
+
+              {/* Tooltip */}
+              <AnimatePresence>
+                {showTooltip && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25 }}
+                    className="absolute -top-10 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs rounded px-3 py-1 shadow-md"
+                  >
+                    Please select all options
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </article>

@@ -194,15 +194,16 @@ export default function CheckoutPage() {
   }
 
   // Inline cart actions
-  function increase(id) {
-    dispatch(increaseQuantity(id));
-  }
-  function decrease(id) {
-    dispatch(decreaseQuantity(id));
-  }
-  function removeCartItem(id) {
-    dispatch(removeItem(id));
-  }
+  const onIncreaseQuantity = (item) =>
+    dispatch(
+      increaseQuantity({ id: item.id, size: item.size, color: item.color })
+    );
+  const onDecreaseQuantity = (item) =>
+    dispatch(
+      decreaseQuantity({ id: item.id, size: item.size, color: item.color })
+    );
+  const onRemoveItem = (item) =>
+    dispatch(removeItem({ id: item.id, size: item.size, color: item.color }));
 
   // Place order simulation
   async function handlePlaceOrder(e) {
@@ -324,7 +325,7 @@ export default function CheckoutPage() {
           <div className="mt-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => decrease(item.id)}
+                onClick={() => onDecreaseQuantity(item)}
                 disabled={item.quantity <= 1}
                 className="w-8 h-8 rounded-md border border-gray-300 text-gray-700 flex items-center justify-center disabled:opacity-40"
                 aria-label={`Decrease qty for ${item.title}`}
@@ -333,7 +334,7 @@ export default function CheckoutPage() {
               </button>
               <div className="w-8 text-center font-medium">{item.quantity}</div>
               <button
-                onClick={() => increase(item.id)}
+                onClick={() => onIncreaseQuantity(item)}
                 disabled={item.quantity >= item.stock}
                 className="w-8 h-8 rounded-md border border-gray-300 text-gray-700 flex items-center justify-center disabled:opacity-40"
                 aria-label={`Increase qty for ${item.title}`}
@@ -344,7 +345,7 @@ export default function CheckoutPage() {
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => removeCartItem(item.id)}
+                onClick={() => onRemoveItem(item)}
                 className="text-xs text-red-600 hover:text-red-800"
               >
                 Remove

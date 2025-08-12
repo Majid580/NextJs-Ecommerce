@@ -55,9 +55,16 @@ export default function CartDropdown() {
     setOpen((prev) => !prev);
   }
 
-  const onIncreaseQuantity = (id) => dispatch(increaseQuantity(id));
-  const onDecreaseQuantity = (id) => dispatch(decreaseQuantity(id));
-  const onRemoveItem = (id) => dispatch(removeItem(id));
+  const onIncreaseQuantity = (item) =>
+    dispatch(
+      increaseQuantity({ id: item.id, size: item.size, color: item.color })
+    );
+  const onDecreaseQuantity = (item) =>
+    dispatch(
+      decreaseQuantity({ id: item.id, size: item.size, color: item.color })
+    );
+  const onRemoveItem = (item) =>
+    dispatch(removeItem({ id: item.id, size: item.size, color: item.color }));
 
   const totalPrice = cartItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
@@ -101,7 +108,7 @@ export default function CartDropdown() {
         )}
       </button>
 
-      {/* Always mounted dropdown */}
+      {/* Dropdown */}
       <motion.div
         ref={dropdownRef}
         onClick={(e) => e.stopPropagation()}
@@ -141,54 +148,65 @@ export default function CartDropdown() {
               Your cart is empty.
             </div>
           ) : (
-            cartItems.map(
-              ({ id, title, price, quantity, stock, sku, images }) => (
-                <div
-                  key={id}
-                  className="flex items-center gap-4 p-4 border-b border-gray-100"
-                >
-                  <img
-                    src={images?.[0] || "/images/default.png"}
-                    alt={title}
-                    className="w-16 h-16 object-contain rounded-lg shadow-sm bg-white"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-gray-900 font-semibold truncate">
-                      {title}
-                    </h3>
-                    <p className="text-sm text-gray-500">SKU: {sku}</p>
-                    <p className="mt-1 text-base font-semibold text-gray-900">
-                      {formatPrice(price)}
+            cartItems.map((item) => (
+              <div
+                key={`${item.id}-${item.size || "no-size"}-${
+                  item.color || "no-color"
+                }`}
+                className="flex items-center gap-4 p-4 border-b border-gray-100"
+              >
+                <img
+                  src={item.images?.[0] || "/images/default.png"}
+                  alt={item.title}
+                  className="w-16 h-16 object-contain rounded-lg shadow-sm bg-white"
+                />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-gray-900 font-semibold truncate">
+                    {item.title}
+                  </h3>
+
+                  {/* Variation info */}
+                  {(item.size || item.color) && (
+                    <p className="text-xs text-gray-500">
+                      {item.size && <>Size: {item.size}</>}
+                      {item.size && item.color && " | "}
+                      {item.color && <>Color: {item.color}</>}
                     </p>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => onDecreaseQuantity(id)}
-                        disabled={quantity <= 1}
-                        className="w-8 h-8 rounded-md border border-gray-400 text-gray-700 hover:bg-gray-800 hover:text-white disabled:opacity-40 transition"
-                      >
-                        –
-                      </button>
-                      <span className="w-6 text-center">{quantity}</span>
-                      <button
-                        onClick={() => onIncreaseQuantity(id)}
-                        disabled={quantity >= stock}
-                        className="w-8 h-8 rounded-md border border-gray-400 text-gray-700 hover:bg-gray-800 hover:text-white disabled:opacity-40 transition"
-                      >
-                        +
-                      </button>
-                    </div>
+                  )}
+
+                  <p className="text-sm text-gray-500">SKU: {item.sku}</p>
+                  <p className="mt-1 text-base font-semibold text-gray-900">
+                    {formatPrice(item.price)}
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => onRemoveItem(id)}
-                      className="text-xs text-red-500 hover:text-red-700 transition"
+                      onClick={() => onDecreaseQuantity(item)}
+                      disabled={item.quantity <= 1}
+                      className="w-8 h-8 rounded-md border border-gray-400 text-gray-700 hover:bg-gray-800 hover:text-white disabled:opacity-40 transition"
                     >
-                      Remove
+                      –
+                    </button>
+                    <span className="w-6 text-center">{item.quantity}</span>
+                    <button
+                      onClick={() => onIncreaseQuantity(item)}
+                      disabled={item.quantity >= item.stock}
+                      className="w-8 h-8 rounded-md border border-gray-400 text-gray-700 hover:bg-gray-800 hover:text-white disabled:opacity-40 transition"
+                    >
+                      +
                     </button>
                   </div>
+                  <button
+                    onClick={() => onRemoveItem(item)}
+                    className="text-xs text-red-500 hover:text-red-700 transition"
+                  >
+                    Remove
+                  </button>
                 </div>
-              )
-            )
+              </div>
+            ))
           )}
         </div>
 

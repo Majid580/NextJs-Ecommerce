@@ -2,7 +2,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  items: [], // { id, title, price, quantity, stock, sku, images }
+  items: [], // { id, title, price, quantity, stock, sku, images, size, color }
 };
 
 const cartSlice = createSlice({
@@ -10,35 +10,48 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addItem(state, action) {
-      const newItem = action.payload;
-      const existingItem = state.items.find((item) => item.id === newItem.id);
+      const { id, size, color, quantity = 1, ...rest } = action.payload;
+
+      // Match by id + size + color to differentiate variations
+      const existingItem = state.items.find(
+        (item) => item.id === id && item.size === size && item.color === color
+      );
 
       if (existingItem) {
         // Increase quantity but don't exceed stock
-        if (existingItem.quantity < existingItem.stock) {
-          existingItem.quantity += 1;
+        if (existingItem.quantity + quantity <= existingItem.stock) {
+          existingItem.quantity += quantity;
+        } else {
+          existingItem.quantity = existingItem.stock; // cap at stock
         }
       } else {
-        state.items.push({ ...newItem, quantity: 1 });
+        state.items.push({ id, size, color, quantity, ...rest });
       }
     },
 
     removeItem(state, action) {
-      const id = action.payload;
-      state.items = state.items.filter((item) => item.id !== id);
+      const { id, size, color } = action.payload;
+      state.items = state.items.filter(
+        (item) =>
+          !(item.id === id && item.size === size && item.color === color)
+      );
     },
 
     increaseQuantity(state, action) {
-      const id = action.payload;
-      const item = state.items.find((item) => item.id === id);
+      const { id, size, color } = action.payload;
+      const item = state.items.find(
+        (item) => item.id === id && item.size === size && item.color === color
+      );
       if (item && item.quantity < item.stock) {
         item.quantity += 1;
       }
     },
 
     decreaseQuantity(state, action) {
-      const id = action.payload;
-      const item = state.items.find((item) => item.id === id);
+      const { id, size, color } = action.payload;
+      const item = state.items.find(
+        (item) => item.id === id && item.size === size && item.color === color
+      );
       if (item && item.quantity > 1) {
         item.quantity -= 1;
       }
@@ -47,6 +60,7 @@ const cartSlice = createSlice({
     clearCart(state) {
       state.items = [];
     },
+
     setCart(state, action) {
       state.items = action.payload.items || [];
     },
