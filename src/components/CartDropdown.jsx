@@ -1,6 +1,8 @@
+// src/components/CartDropdown.jsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useSelector, useDispatch } from "react-redux";
 import {
   selectCartItems,
@@ -8,7 +10,7 @@ import {
   decreaseQuantity,
   removeItem,
 } from "@/redux/slices/cartSlice";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 
 export default function CartDropdown() {
@@ -16,11 +18,13 @@ export default function CartDropdown() {
   const dispatch = useDispatch();
 
   const [open, setOpen] = useState(false);
-  const [openUpwards, setOpenUpwards] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
 
-  // Close when clicking outside
+  useEffect(() => setMounted(true), []);
+
+  // Close on outside click/touch
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -33,7 +37,9 @@ export default function CartDropdown() {
     }
     if (open) {
       document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("touchstart", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside, {
+        passive: true,
+      });
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -41,19 +47,14 @@ export default function CartDropdown() {
     };
   }, [open]);
 
-  function toggleOpen() {
-    if (!open && buttonRef.current) {
-      const buttonRect = buttonRef.current.getBoundingClientRect();
-      const dropdownHeight = 480;
-      const spaceBelow = window.innerHeight - buttonRect.bottom;
-      const spaceAbove = buttonRect.top;
-
-      setOpenUpwards(
-        spaceBelow < dropdownHeight && spaceAbove > dropdownHeight
-      );
+  // Close on ESC
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === "Escape") setOpen(false);
     }
-    setOpen((prev) => !prev);
-  }
+    if (open) window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   const onIncreaseQuantity = (item) =>
     dispatch(
@@ -78,14 +79,17 @@ export default function CartDropdown() {
     }).format(price / 100);
 
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block ">
       {/* Cart Button */}
       <button
         id="cart-button"
         ref={buttonRef}
-        onClick={toggleOpen}
-        className="relative p-2 rounded-full hover:bg-gray-100 transition"
+        onClick={() => setOpen((s) => !s)}
+        className="relative p-2 rounded-full hover:bg-gray-100 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/20"
         title="Cart"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-controls="cart-dropdown"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -93,6 +97,7 @@ export default function CartDropdown() {
           stroke="currentColor"
           viewBox="0 0 24 24"
           className="w-6 h-6"
+          aria-hidden="true"
         >
           <path
             strokeLinecap="round"
@@ -108,123 +113,287 @@ export default function CartDropdown() {
         )}
       </button>
 
-      {/* Dropdown */}
-      <motion.div
-        ref={dropdownRef}
-        onClick={(e) => e.stopPropagation()}
-        initial={false}
-        animate={open ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
-        className={`absolute z-50
-          ${openUpwards ? "bottom-full mb-3" : "top-full mt-3"}
-          w-[90vw] max-w-md bg-white/80 backdrop-blur-md border border-gray-200 shadow-2xl rounded-xl
-          md:origin-top-right md:translate-x-[-300px]
-          origin-top-center left-[-20px] -translate-x-1/2 md:left-auto`}
-        style={{
-          maxHeight: "70vh",
-          pointerEvents: open ? "auto" : "none",
-        }}
-      >
-        {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b border-gray-200">
-          <span className="font-semibold text-lg text-gray-900">
-            Your Cart ({cartItems.length})
-          </span>
-          <button
-            onClick={() => setOpen(false)}
-            className="text-gray-500 hover:text-gray-800 transition text-xl"
-          >
-            &times;
-          </button>
-        </div>
-
-        {/* Items */}
-        <div
-          className="overflow-y-auto overflow-x-hidden"
-          style={{ maxHeight: "45vh" }}
-        >
-          {cartItems.length === 0 ? (
-            <div className="p-8 text-center text-gray-500 italic">
-              Your cart is empty.
-            </div>
-          ) : (
-            cartItems.map((item) => (
-              <div
-                key={`${item.id}-${item.size || "no-size"}-${
-                  item.color || "no-color"
-                }`}
-                className="flex items-center gap-4 p-4 border-b border-gray-100"
-              >
-                <img
-                  src={item.images?.[0] || "/images/default.png"}
-                  alt={item.title}
-                  className="w-16 h-16 object-contain rounded-lg shadow-sm bg-white"
+      {/* PORTAL RENDERING */}
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {open && (
+              <div className="fixed inset-0 z-[9999]">
+                {/* Backdrop */}
+                <motion.div
+                  className="absolute inset-0 bg-black/40"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setOpen(false)}
+                  aria-hidden="true"
                 />
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-gray-900 font-semibold truncate">
-                    {item.title}
-                  </h3>
 
-                  {/* Variation info */}
-                  {(item.size || item.color) && (
-                    <p className="text-xs text-gray-500">
-                      {item.size && <>Size: {item.size}</>}
-                      {item.size && item.color && " | "}
-                      {item.color && <>Color: {item.color}</>}
-                    </p>
-                  )}
+                {/* Desktop panel (top-right) */}
+                <motion.div
+                  ref={dropdownRef}
+                  role="dialog"
+                  aria-label="Cart"
+                  className="
+                    hidden md:flex absolute top-0 right-0
+                    mt-16 mr-3 text-black
+                    w-full max-w-md
+                    bg-white/95 backdrop-blur border border-gray-200 shadow-2xl rounded-xl
+                    overflow-hidden
+                  "
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  style={{ maxHeight: "80dvh" }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex flex-col w-full">
+                    {/* Header */}
+                    <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-white/90 backdrop-blur sticky top-0">
+                      <span className="font-semibold text-lg text-gray-900">
+                        Your Cart ({cartItems.length})
+                      </span>
+                      <button
+                        onClick={() => setOpen(false)}
+                        className="text-gray-500 hover:text-gray-800 transition text-xl leading-none"
+                        aria-label="Close cart"
+                      >
+                        &times;
+                      </button>
+                    </div>
 
-                  <p className="text-sm text-gray-500">SKU: {item.sku}</p>
-                  <p className="mt-1 text-base font-semibold text-gray-900">
-                    {formatPrice(item.price)}
-                  </p>
-                </div>
-
-                <div className="flex flex-col items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onDecreaseQuantity(item)}
-                      disabled={item.quantity <= 1}
-                      className="w-8 h-8 rounded-md border border-gray-400 text-gray-700 hover:bg-gray-800 hover:text-white disabled:opacity-40 transition"
+                    {/* Items */}
+                    <div
+                      className="overflow-y-auto"
+                      style={{ maxHeight: "55dvh" }}
                     >
-                      –
-                    </button>
-                    <span className="w-6 text-center">{item.quantity}</span>
+                      {cartItems.length === 0 ? (
+                        <div className="p-8 text-center text-gray-500 italic">
+                          Your cart is empty.
+                        </div>
+                      ) : (
+                        cartItems.map((item) => (
+                          <div
+                            key={`${item.id}-${item.size || "no-size"}-${
+                              item.color || "no-color"
+                            }`}
+                            className="flex items-center gap-4 p-4 border-b border-gray-100"
+                          >
+                            <img
+                              src={item.images?.[0] || "/images/default.png"}
+                              alt={item.title}
+                              className="w-16 h-16 object-contain rounded-lg bg-white"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-gray-900 font-semibold truncate">
+                                {item.title}
+                              </h3>
+                              {(item.size || item.color) && (
+                                <p className="text-xs text-gray-500">
+                                  {item.size && <>Size: {item.size}</>}
+                                  {item.size && item.color && " | "}
+                                  {item.color && <>Color: {item.color}</>}
+                                </p>
+                              )}
+                              <p className="text-xs text-gray-400">
+                                SKU: {item.sku}
+                              </p>
+                              <p className="mt-1 text-base font-semibold text-gray-900">
+                                {formatPrice(item.price)}
+                              </p>
+                            </div>
+
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => onDecreaseQuantity(item)}
+                                  disabled={item.quantity <= 1}
+                                  className="w-8 h-8 rounded-md border border-gray-400 text-gray-700 hover:bg-gray-800 hover:text-white disabled:opacity-40 transition"
+                                  aria-label="Decrease quantity"
+                                >
+                                  –
+                                </button>
+                                <span className="w-6 text-center">
+                                  {item.quantity}
+                                </span>
+                                <button
+                                  onClick={() => onIncreaseQuantity(item)}
+                                  disabled={item.quantity >= item.stock}
+                                  className="w-8 h-8 rounded-md border border-gray-400 text-gray-700 hover:bg-gray-800 hover:text-white disabled:opacity-40 transition"
+                                  aria-label="Increase quantity"
+                                >
+                                  +
+                                </button>
+                              </div>
+                              <button
+                                onClick={() => onRemoveItem(item)}
+                                className="text-xs text-red-500 hover:text-red-700 transition"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    {cartItems.length > 0 && (
+                      <div className="p-4 border-t border-gray-200 bg-gray-50 sticky bottom-0">
+                        <div className="flex justify-between font-semibold text-lg mb-4">
+                          <span>Total:</span>
+                          <span>{formatPrice(totalPrice)}</span>
+                        </div>
+                        <Link href="/checkout">
+                          <button className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-900 active:bg-gray-800 transition">
+                            Checkout
+                          </button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+
+                {/* Mobile bottom sheet */}
+                <motion.div
+                  ref={dropdownRef}
+                  role="dialog"
+                  aria-label="Cart"
+                  aria-modal="true"
+                  className="
+                    md:hidden absolute inset-x-0 bottom-0 text-black
+                    w-full rounded-t-2xl bg-white shadow-2xl
+                    overflow-hidden
+                  "
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{
+                    type: "tween",
+                    duration: 0.25,
+                    ease: "easeOut",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ maxHeight: "100dvh", height: "min(88svh, 88dvh)" }}
+                >
+                  {/* Grab handle */}
+                  <div className="flex items-center justify-center py-2">
+                    <span className="h-1.5 w-12 rounded-full bg-gray-300" />
+                  </div>
+
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 sticky top-0 bg-white/90 backdrop-blur">
+                    <span className="font-semibold text-base text-gray-900">
+                      Your Cart ({cartItems.length})
+                    </span>
                     <button
-                      onClick={() => onIncreaseQuantity(item)}
-                      disabled={item.quantity >= item.stock}
-                      className="w-8 h-8 rounded-md border border-gray-400 text-gray-700 hover:bg-gray-800 hover:text-white disabled:opacity-40 transition"
+                      onClick={() => setOpen(false)}
+                      className="text-gray-500 hover:text-gray-800 transition text-2xl leading-none"
+                      aria-label="Close cart"
                     >
-                      +
+                      &times;
                     </button>
                   </div>
-                  <button
-                    onClick={() => onRemoveItem(item)}
-                    className="text-xs text-red-500 hover:text-red-700 transition"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
 
-        {/* Footer */}
-        {cartItems.length > 0 && (
-          <div className="p-4 border-t border-gray-200 bg-gray-50 rounded-b-xl">
-            <div className="flex justify-between font-semibold text-lg mb-4">
-              <span>Total:</span>
-              <span>{formatPrice(totalPrice)}</span>
-            </div>
-            <Link href="/checkout">
-              <button className="w-full py-3 bg-black text-white rounded-lg shadow-md hover:bg-gray-900 active:bg-gray-800 transition">
-                Checkout
-              </button>
-            </Link>
-          </div>
+                  {/* Items (panel owns the scroll) */}
+                  <div
+                    className="overflow-y-auto"
+                    style={{
+                      maxHeight: "56dvh",
+                      WebkitOverflowScrolling: "touch",
+                    }}
+                  >
+                    {cartItems.length === 0 ? (
+                      <div className="p-8 text-center text-gray-500 italic">
+                        Your cart is empty.
+                      </div>
+                    ) : (
+                      cartItems.map((item) => (
+                        <div
+                          key={`${item.id}-${item.size || "no-size"}-${
+                            item.color || "no-color"
+                          }`}
+                          className="flex items-center gap-3 px-4 py-3 border-b border-gray-100"
+                        >
+                          <img
+                            src={item.images?.[0] || "/images/default.png"}
+                            alt={item.title}
+                            className="w-14 h-14 object-contain rounded-md bg-white"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-gray-900 font-semibold truncate text-sm">
+                              {item.title}
+                            </h3>
+                            {(item.size || item.color) && (
+                              <p className="text-[11px] text-gray-500">
+                                {item.size && <>Size: {item.size}</>}
+                                {item.size && item.color && " | "}
+                                {item.color && <>Color: {item.color}</>}
+                              </p>
+                            )}
+                            <p className="text-[11px] text-gray-400">
+                              SKU: {item.sku}
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-gray-900">
+                              {formatPrice(item.price)}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-col items-center gap-1">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => onDecreaseQuantity(item)}
+                                disabled={item.quantity <= 1}
+                                className="w-8 h-8 rounded-md border border-gray-400 text-gray-700 hover:bg-gray-800 hover:text-white disabled:opacity-40 transition"
+                                aria-label="Decrease quantity"
+                              >
+                                –
+                              </button>
+                              <span className="w-6 text-center text-sm">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() => onIncreaseQuantity(item)}
+                                disabled={item.quantity >= item.stock}
+                                className="w-8 h-8 rounded-md border border-gray-400 text-gray-700 hover:bg-gray-800 hover:text-white disabled:opacity-40 transition"
+                                aria-label="Increase quantity"
+                              >
+                                +
+                              </button>
+                            </div>
+                            <button
+                              onClick={() => onRemoveItem(item)}
+                              className="text-[11px] text-red-500 hover:text-red-700 transition"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  {cartItems.length > 0 && (
+                    <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 sticky bottom-0">
+                      <div className="flex justify-between items-center font-semibold text-base mb-3">
+                        <span>Total</span>
+                        <span>{formatPrice(totalPrice)}</span>
+                      </div>
+                      <Link href="/checkout">
+                        <button className="w-full py-3 rounded-lg bg-black text-white font-medium hover:bg-gray-900 active:bg-gray-800 transition">
+                          Checkout
+                        </button>
+                      </Link>
+                    </div>
+                  )}
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>,
+          document.body
         )}
-      </motion.div>
     </div>
   );
 }
