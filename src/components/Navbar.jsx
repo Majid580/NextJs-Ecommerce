@@ -136,7 +136,7 @@ export default function Navbar() {
               >
                 <FaTshirt className="text-2xl" aria-hidden />
                 <span className="font-extrabold text-lg sm:text-xl select-none tracking-tight">
-                  Sajid Garments
+                  Civora
                 </span>
               </Link>
 
@@ -269,7 +269,7 @@ export default function Navbar() {
             >
               <FaTshirt className="text-2xl" aria-hidden />
               <span className="font-extrabold text-lg tracking-tight">
-                Sajid Garments
+                Civora
               </span>
             </Link>
             <button

@@ -1,3 +1,4 @@
+// src/app/category/[category]/page.jsx
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -10,36 +11,28 @@ import {
   FaStar,
   FaFilter,
   FaTimes,
-  FaChevronDown,
 } from "react-icons/fa";
 import { allProducts } from "@/data/allProducts";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  addItem,
-  removeItem,
-  increaseQuantity,
-  decreaseQuantity,
-  selectCartItems,
-} from "@/redux/slices/cartSlice";
+import { useDispatch } from "react-redux";
+import { addItem } from "@/redux/slices/cartSlice";
 import toast from "react-hot-toast";
+
 /**
  * CategoryProductsPage
  *
  * - Mobile: filter drawer slides from left (80% width)
  * - Desktop: left sticky sidebar visible
  * - Click outside or Esc closes drawer
- * - Framer Motion animations for drawer + cards + micro interactions
- *
- * NOTE: Tailwind classes are used for styling. Adjust spacing/colours to taste.
+ * - Body scroll locks while drawer is open
+ * - Framer Motion animations for drawer + cards
  */
 
 export default function CategoryProductsPage({ params }) {
-  // category from params (Next.js dynamic route)
   const category = (params?.category || "all").toString().toLowerCase();
 
-  // initial product list for category
+  // initial product list for category (assuming product.for holds the category)
   const initialProducts = useMemo(
-    () => allProducts.filter((p) => p.for.toLowerCase() === category),
+    () => allProducts.filter((p) => (p.for || "").toLowerCase() === category),
     [category]
   );
 
@@ -52,8 +45,18 @@ export default function CategoryProductsPage({ params }) {
   // drawer open state (mobile)
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // for focusing when drawer opens
+  // focus ref when drawer opens
   const firstFilterFocusRef = useRef(null);
+
+  // lock body scroll when drawer open
+  useEffect(() => {
+    if (!isFilterOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isFilterOpen]);
 
   // --- dynamic filter options
   const sizesOptions = useMemo(() => {
@@ -131,7 +134,6 @@ export default function CategoryProductsPage({ params }) {
     }
     window.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onPointerDown);
-
     return () => {
       window.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointerDown);
@@ -149,11 +151,7 @@ export default function CategoryProductsPage({ params }) {
   }, [isFilterOpen]);
 
   // --- Framer Motion variants
-  const backdropVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 },
-  };
-
+  const backdropVariants = { hidden: { opacity: 0 }, visible: { opacity: 1 } };
   const drawerVariants = {
     hidden: { x: "-110%", opacity: 0 },
     visible: {
@@ -167,15 +165,9 @@ export default function CategoryProductsPage({ params }) {
       transition: { ease: "easeInOut", duration: 0.18 },
     },
   };
-
   const productContainerVariants = {
-    visible: {
-      transition: {
-        staggerChildren: 0.06,
-      },
-    },
+    visible: { transition: { staggerChildren: 0.06 } },
   };
-
   const productCardVariants = {
     hidden: { opacity: 0, y: 18, scale: 0.99 },
     visible: {
@@ -185,19 +177,6 @@ export default function CategoryProductsPage({ params }) {
       transition: { duration: 0.36, ease: "easeOut" },
     },
   };
-
-  // small util for price input handlers
-  function updateMinPrice(value) {
-    const v = Math.max(0, Math.min(Number(value || 0), priceRange[1]));
-    setPriceRange([v, priceRange[1]]);
-  }
-  function updateMaxPrice(value) {
-    const v = Math.max(
-      Number(value || 0),
-      Math.max(priceRange[0], Number(value || 0))
-    );
-    setPriceRange([priceRange[0], v]);
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white text-gray-900">
@@ -220,7 +199,7 @@ export default function CategoryProductsPage({ params }) {
               <span className="text-sm font-medium">Filters</span>
             </button>
 
-            {/* Desktop small-ish filters summary */}
+            {/* Desktop summary */}
             <div className="hidden lg:flex items-center gap-2">
               <span className="text-sm text-gray-600">
                 {filteredProducts.length} items
@@ -237,7 +216,7 @@ export default function CategoryProductsPage({ params }) {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
-        {/* ---------- Desktop Sidebar (always visible on lg+) ---------- */}
+        {/* ---------- Desktop Sidebar ---------- */}
         <aside className="hidden lg:block sticky top-24 self-start">
           <div className="bg-white rounded-2xl shadow-md p-4 w-full">
             <FilterPanel
@@ -258,7 +237,7 @@ export default function CategoryProductsPage({ params }) {
           </div>
         </aside>
 
-        {/* ---------- Content (Products Grid) ---------- */}
+        {/* ---------- Products Grid ---------- */}
         <section>
           {/* mobile inline filter summary row */}
           <div className="flex items-center justify-between mb-4 lg:hidden">
@@ -302,7 +281,7 @@ export default function CategoryProductsPage({ params }) {
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6"
             >
               <AnimatePresence>
-                {filteredProducts.map((product, i) => (
+                {filteredProducts.map((product) => (
                   <motion.div
                     key={product.id}
                     variants={productCardVariants}
@@ -319,11 +298,20 @@ export default function CategoryProductsPage({ params }) {
         </section>
       </main>
 
-      {/* ---------- Mobile Drawer (AnimatePresence) ---------- */}
+      {/* ---------- Floating Mobile Filters FAB ---------- */}
+      <button
+        onClick={() => setIsFilterOpen(true)}
+        className="fixed bottom-5 right-5 z-40 lg:hidden inline-flex items-center gap-2 px-4 py-3 rounded-full bg-black text-white shadow-xl active:scale-95"
+        aria-label="Open filters"
+      >
+        <FaFilter /> Filters
+      </button>
+
+      {/* ---------- Mobile Drawer ---------- */}
       <AnimatePresence>
         {isFilterOpen && (
           <motion.div
-            className="fixed inset-0 z-40 flex lg:hidden"
+            className="fixed inset-0 z-50 flex lg:hidden"
             initial="hidden"
             animate="visible"
             exit="hidden"
@@ -338,7 +326,6 @@ export default function CategoryProductsPage({ params }) {
               exit="hidden"
               onClick={() => setIsFilterOpen(false)}
             />
-
             {/* Drawer */}
             <motion.aside
               id="filters-drawer"
@@ -357,13 +344,12 @@ export default function CategoryProductsPage({ params }) {
                   <button
                     onClick={() => {
                       resetFilters();
-                      // keep drawer open to show cleared state
+                      firstFilterFocusRef.current?.focus();
                     }}
                     className="text-sm px-3 py-1 rounded-full border border-gray-200 hover:bg-gray-50"
                   >
                     Clear
                   </button>
-
                   <button
                     onClick={() => setIsFilterOpen(false)}
                     aria-label="Close filters"
@@ -389,13 +375,13 @@ export default function CategoryProductsPage({ params }) {
                   setPriceRange={setPriceRange}
                   resetFilters={() => {
                     resetFilters();
-                    // focus the first input after clearing
                     firstFilterFocusRef.current?.focus();
                   }}
                   firstFocusRef={firstFilterFocusRef}
                 />
-                {/* Apply button */}
-                <div className="sticky bottom-0 left-0 right-0 bg-white/60 backdrop-blur-sm py-3 -mx-4 px-4">
+
+                {/* Apply button (closes drawer) */}
+                <div className="sticky bottom-0 left-0 right-0 bg-white/70 backdrop-blur-sm py-3 -mx-4 px-4">
                   <div className="flex gap-3">
                     <button
                       onClick={() => setIsFilterOpen(false)}
@@ -424,7 +410,7 @@ export default function CategoryProductsPage({ params }) {
 }
 
 /* ===========================================================================
-   FilterPanel - reusable UI block for both mobile drawer & desktop sidebar
+   FilterPanel
    =========================================================================== */
 function FilterPanel({
   sizesOptions = [],
@@ -441,7 +427,6 @@ function FilterPanel({
   resetFilters = () => {},
   firstFocusRef = null,
 }) {
-  // micro-animation variants
   const chipVariants = {
     rest: { scale: 1 },
     hover: { scale: 1.04 },
@@ -460,7 +445,6 @@ function FilterPanel({
             {sizesOptions.length} options
           </span>
         </div>
-
         <div className="flex flex-wrap gap-2">
           {sizesOptions.map((size, idx) => {
             const active = selectedSizes.includes(size);
@@ -474,12 +458,11 @@ function FilterPanel({
                 variants={chipVariants}
                 aria-pressed={active}
                 ref={idx === 0 ? firstFocusRef : undefined}
-                className={`px-3 py-1 rounded-full border shadow-sm text-sm font-medium transition
-                  ${
-                    active
-                      ? "bg-black text-white border-black shadow-lg"
-                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-                  }`}
+                className={`px-3 py-1 rounded-full border shadow-sm text-sm font-medium transition ${
+                  active
+                    ? "bg-black text-white border-black shadow-lg"
+                    : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                }`}
               >
                 {size}
               </motion.button>
@@ -500,26 +483,22 @@ function FilterPanel({
             {colorsOptions.length} options
           </span>
         </div>
-
         <div className="flex flex-wrap gap-2 items-center">
           {colorsOptions.map((color) => {
             const active = selectedColors.includes(color);
-            // some color strings may be names, hex codes, rgb; we trust the value for style
             return (
               <button
                 key={color}
                 onClick={() => toggleColor(color)}
                 title={color}
                 aria-pressed={active}
-                className={`w-8 h-8 rounded-full border-2 transition-shadow flex items-center justify-center focus:outline-none
-                  ${
-                    active
-                      ? "ring-2 ring-offset-2 ring-black border-black shadow-md"
-                      : "border-transparent hover:border-gray-300"
-                  }`}
+                className={`w-8 h-8 rounded-full border-2 transition-shadow flex items-center justify-center focus:outline-none ${
+                  active
+                    ? "ring-2 ring-offset-2 ring-black border-black shadow-md"
+                    : "border-transparent hover:border-gray-300"
+                }`}
                 style={{ backgroundColor: color }}
               >
-                {/* when active, show a small check */}
                 {active && (
                   <svg
                     width="12"
@@ -567,7 +546,6 @@ function FilterPanel({
         <h4 id="label-price" className="font-semibold text-gray-900 mb-2">
           Price (₨)
         </h4>
-
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -592,7 +570,6 @@ function FilterPanel({
             aria-label="Maximum price"
           />
         </div>
-
         <div className="mt-3 text-xs text-gray-500">
           Adjusted live — products update as you edit.
         </div>
@@ -617,22 +594,22 @@ function FilterPanel({
 }
 
 /* ===========================================================================
-   ProductCard - polished, animated product card
+   ProductCard
    =========================================================================== */
 function ProductCard({ product }) {
+  const dispatch = useDispatch();
   const [hovered, setHovered] = useState(false);
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || "");
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(null);
   const [addingToCart, setAddingToCart] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+
   const colors = product.colors?.length
     ? product.colors
     : ["#000000", "#FF0000", "#0000FF"];
+  const sizes = product.sizes?.length ? product.sizes : [];
 
-  const sizes = product.sizes?.length ? product.sizes : []; // Optional
-
-  // Card hover animation variants
   const cardHover = {
     initial: { y: 0 },
     hover: {
@@ -640,48 +617,48 @@ function ProductCard({ product }) {
       transition: { type: "spring", stiffness: 300, damping: 20 },
     },
   };
-
   const imageVariants = {
     rest: { scale: 1, rotate: 0 },
-    hover: { scale: 1.08, rotate: 0.5, transition: { duration: 0.45 } },
+    hover: { scale: 1.06, rotate: 0.4, transition: { duration: 0.45 } },
   };
+
+  // validation
   const canAddToCart =
     product.stock > 0 &&
-    (colors.length === 0 || selectedColor !== null) &&
-    (sizes.length === 0 || selectedSize !== null);
+    (colors.length === 0 || selectedColor) &&
+    (sizes.length === 0 || selectedSize);
 
   const handleAddToCart = () => {
     if (!canAddToCart) {
-      if (colors.length > 0 && selectedColor === null) {
+      if (colors.length > 0 && !selectedColor) {
         toast.error("Please select a color first!");
         return;
       }
-      if (sizes.length > 0 && selectedSize === null) {
+      if (sizes.length > 0 && !selectedSize) {
         toast.error("Please select a size first!");
         return;
       }
       toast.error("Please select all required options.");
       return;
-    } else {
-      setAddingToCart(true);
-      dispatch(
-        addItem({
-          id: product.id,
-          title: product.title,
-          price: product.price,
-          stock: product.stock,
-          sku: product.sku,
-          images: product.images,
-          size: selectedSize,
-          color: selectedColor,
-          quantity,
-        })
-      );
-      toast.success(`${product.title} added to cart!`);
-      setTimeout(() => setAddingToCart(false), 1000);
     }
+    setAddingToCart(true);
+    dispatch(
+      addItem({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        stock: product.stock,
+        sku: product.sku,
+        images: product.images,
+        size: selectedSize,
+        color: selectedColor,
+        quantity,
+      })
+    );
+    toast.success(`${product.title} added to cart!`);
+    setTimeout(() => setAddingToCart(false), 1000);
   };
-  const dispatch = useDispatch();
+
   return (
     <motion.article
       layout
@@ -694,37 +671,55 @@ function ProductCard({ product }) {
       role="article"
       aria-labelledby={`product-${product.id}`}
     >
-      {/* Image area with layered overlay */}
-      <div className="relative w-full h-64 bg-gradient-to-b from-white to-gray-50 flex items-center justify-center overflow-hidden">
+      {/* Image area (lowered) */}
+      <div className="relative w-full h-64 bg-gradient-to-b from-white to-gray-50 overflow-hidden pt-5 pb-2">
         <motion.div
           variants={imageVariants}
           initial="rest"
           animate={hovered ? "hover" : "rest"}
-          className="relative w-full h-full flex items-center justify-center"
+          className="relative w-full h-full"
         >
-          <Link href={`/products/${product.slug}`} className="absolute inset-0">
-            {/* Image fill */}
+          <Link
+            href={`/products/${product.slug}`}
+            className="absolute inset-0 block"
+          >
             <Image
               src={product.images?.[0]}
               alt={product.title}
               fill
-              className="object-contain p-4"
+              className="object-contain px-4 pt-1 pb-4 object-[center_60%]"
               sizes="(max-width: 640px) 100vw, 50vw"
-              priority
             />
           </Link>
         </motion.div>
 
-        {/* Floating rating badge */}
-        <div className="absolute top-3 left-3 bg-yellow-400 text-white px-2 py-0.5 rounded-full text-xs font-bold shadow">
-          <FaStar className="inline mr-1" />{" "}
-          {product.rating?.toFixed?.(1) ?? "—"}
+        {/* rating & stock badges */}
+        <div className="absolute top-2 left-2 flex gap-2 items-center">
+          <span className="bg-yellow-400 text-white px-2 py-0.5 rounded-full text-xs font-bold shadow">
+            <FaStar className="inline mr-1" />{" "}
+            {product.rating?.toFixed?.(1) ?? "—"}
+          </span>
+          <span
+            className={`text-[11px] px-2 py-0.5 rounded-full ${
+              product.stock === 0
+                ? "bg-red-100 text-red-700"
+                : product.stock > 0 && product.stock <= 10
+                ? "bg-amber-100 text-amber-800"
+                : "bg-emerald-100 text-emerald-800"
+            }`}
+          >
+            {product.stock === 0
+              ? "Out of stock"
+              : product.stock <= 10
+              ? `Only ${product.stock} left`
+              : "In stock"}
+          </span>
         </div>
 
-        {/* Action buttons (appear on hover) */}
+        {/* wishlist (on hover desktop) */}
         <div
-          className={`absolute right-3 top-3 flex flex-col gap-2 transition-opacity ${
-            hovered ? "opacity-100" : "opacity-0 pointer-events-none"
+          className={`absolute right-2 top-2 transition-opacity ${
+            hovered ? "opacity-100" : "opacity-0 lg:pointer-events-none"
           }`}
         >
           <button
@@ -736,7 +731,7 @@ function ProductCard({ product }) {
         </div>
       </div>
 
-      {/* Content block */}
+      {/* Content */}
       <div className="p-4 flex flex-col gap-3 flex-1">
         <h3
           id={`product-${product.id}`}
@@ -755,49 +750,58 @@ function ProductCard({ product }) {
         </div>
 
         {/* Sizes */}
-        <div className="flex gap-2 flex-wrap">
-          {product.sizes?.map((size) => {
-            const active = selectedSize === size;
-            return (
-              <button
-                key={size}
-                onClick={() => setSelectedSize(size)}
-                className={`px-3 py-1 text-xs rounded-full border shadow-sm transition 
-                  ${
+        {sizes.length > 0 && (
+          <div className="flex gap-2 flex-wrap">
+            {sizes.map((size) => {
+              const active = selectedSize === size;
+              return (
+                <button
+                  key={size}
+                  onClick={() => setSelectedSize(size)}
+                  className={`px-3 py-1 text-xs rounded-full border shadow-sm transition ${
                     active
                       ? "bg-black text-white border-black"
                       : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
                   }`}
-                aria-pressed={active}
-              >
-                {size}
-              </button>
-            );
-          })}
-        </div>
-        {/* Color Selector */}
+                  aria-pressed={active}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Colors */}
         {colors.length > 0 && (
-          <div className="mb-8">
-            <p className="mb-2 font-semibold">Select Color:</p>
-            <div className="flex space-x-4">
-              {colors.map((color, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedColor(color)}
-                  aria-label={`Select color ${color}`}
-                  style={{ backgroundColor: color }}
-                  className={`w-8 h-8 rounded-full border-2 ${
-                    selectedColor === color
-                      ? "border-gray-800 scale-120"
-                      : "border-gray-400 hover:border-gray-400"
-                  }`}
-                />
-              ))}
+          <div className="mt-1">
+            <p className="mb-1 text-xs font-semibold text-gray-700">
+              Select Color:
+            </p>
+            <div className="flex gap-3">
+              {colors.map((color, i) => {
+                const active = selectedColor === color;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedColor(color)}
+                    aria-label={`Select color ${color}`}
+                    style={{ backgroundColor: color }}
+                    className={`w-7 h-7 rounded-full border-2 transition ${
+                      active
+                        ? "border-gray-800 scale-110"
+                        : "border-gray-400 hover:border-gray-600"
+                    }`}
+                    title={color}
+                  />
+                );
+              })}
             </div>
           </div>
         )}
+
         {/* Quantity + Add to Cart */}
-        <div className="mt-auto flex items-center justify-between gap-3">
+        <div className="mt-auto flex items-center justify-between gap-1">
           <div className="flex items-center rounded-full border overflow-hidden">
             <button
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -806,7 +810,9 @@ function ProductCard({ product }) {
             >
               -
             </button>
-            <div className="px-2 py-1 font-medium">{quantity}</div>
+            <div className="px-1 py-1 font-medium min-w-[2ch] text-center">
+              {quantity}
+            </div>
             <button
               onClick={() => setQuantity((q) => q + 1)}
               className="px-3 py-1 hover:bg-gray-100 transition"
@@ -816,11 +822,11 @@ function ProductCard({ product }) {
             </button>
           </div>
 
-          {/* Add To Cart */}
-          <div className="relative max-w-xs">
+          <div className="relative">
             <button
               onClick={handleAddToCart}
-              className="flex items-center justify-center gap-3 bg-gray-900 text-white px-6 py-3 rounded-md font-semibold w-full hover:bg-gray-800 disabled:opacity-50"
+              disabled={product.stock === 0}
+              className="flex items-center justify-center gap-1 bg-gray-900 text-white px-4 py-2.5 rounded-md font-semibold hover:bg-gray-800 disabled:opacity-50"
             >
               <FaShoppingCart />
               {addingToCart ? "Adding..." : "Add"}
@@ -832,8 +838,8 @@ function ProductCard({ product }) {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.25 }}
-                  className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-sm rounded px-3 py-1 shadow-md"
+                  transition={{ duration: 0.22 }}
+                  className="absolute -top-10 left-1/2 -translate-x-1/2 bg-red-600 text-white text-xs rounded px-3 py-1 shadow-md"
                 >
                   Please select all required options.
                 </motion.div>

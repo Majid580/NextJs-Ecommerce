@@ -105,7 +105,7 @@ export default function HeroSection() {
 
                 <div className="relative z-10">
                   <Image
-                    src="/images/hero.png"
+                    src="/images/lehenga1.png"
                     alt="ETNA Product"
                     width={520}
                     height={520}
